@@ -65,9 +65,11 @@ Do not commit secrets to appsettings files. Use environment variables or .NET us
 
 ## Current scope
 
-Milestone 1 đã thêm các entity domain cơ bản `Company`, `Candidate`, `Job` với
-constructor bảo vệ invariant và unit test xUnit. `Job` nhận `IClock` để kiểm tra
-deadline mà không phụ thuộc trực tiếp vào thời gian hệ thống.
+Milestone 1–2 đã thêm các entity domain cơ bản `Company`, `Candidate`, `Job`,
+value object `SalaryRange`, `Skill` và trạng thái tin tuyển dụng. Các
+constructor bảo vệ invariant; `Job` nhận `IClock` để kiểm tra deadline mà không
+phụ thuộc trực tiếp vào thời gian hệ thống, đồng thời quản lý trạng thái và
+danh sách kỹ năng qua các method nghiệp vụ.
 
 Chưa có service, repository, EF Core/PostgreSQL, auth, MediatR, AutoMapper,
 cache, queue hay background job; các phần này sẽ được thêm theo đúng milestone
