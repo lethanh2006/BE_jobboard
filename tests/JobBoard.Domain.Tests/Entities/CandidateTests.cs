@@ -71,4 +71,17 @@ public sealed class CandidateTests
 
         Assert.Equal("Nguyễn An", candidate.GetDisplayName());
     }
+
+    [Fact]
+    public void AddSkill_WithSameNameIgnoringCase_DoesNotAddDuplicate()
+    {
+        var candidate = new Candidate(1, "Nguyễn An", "an@example.com");
+
+        var firstAdded = candidate.AddSkill(new Skill("C#"));
+        var duplicateAdded = candidate.AddSkill(new Skill(" c# "));
+
+        Assert.True(firstAdded);
+        Assert.False(duplicateAdded);
+        Assert.Single(candidate.Skills);
+    }
 }

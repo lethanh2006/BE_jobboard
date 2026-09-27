@@ -64,6 +64,18 @@ public sealed class JobTests
     }
 
     [Fact]
+    public void Publish_RaisesPublishedEventOnce()
+    {
+        var job = CreateJob();
+        var publishedJobs = new List<Job>();
+        job.Published += publishedJobs.Add;
+
+        job.Publish();
+
+        Assert.Equal([job], publishedJobs);
+    }
+
+    [Fact]
     public void Close_ChangesPublishedToClosed()
     {
         var job = CreateJob();

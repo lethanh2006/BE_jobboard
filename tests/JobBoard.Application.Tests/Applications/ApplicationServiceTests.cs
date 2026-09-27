@@ -118,6 +118,8 @@ public sealed class ApplicationServiceTests
 
         public Job? GetById(int id) => _jobs.GetValueOrDefault(id);
 
+        public IReadOnlyCollection<Job> GetAll() => _jobs.Values;
+
         public void Add(Job entity) => _jobs.Add(entity.Id, entity);
 
         public void Update(Job entity) => _jobs[entity.Id] = entity;

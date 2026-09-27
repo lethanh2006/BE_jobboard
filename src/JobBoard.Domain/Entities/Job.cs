@@ -60,6 +60,8 @@ public sealed class Job
 
     public bool IsExpired => Deadline <= _clock.UtcNow;
 
+    public event Action<Job>? Published;
+
     public void Publish()
     {
         if (Status != JobStatus.Draft)
@@ -68,6 +70,7 @@ public sealed class Job
         }
 
         Status = JobStatus.Published;
+        Published?.Invoke(this);
     }
 
     public void Close()
@@ -95,17 +98,5 @@ public sealed class Job
         }
 
         return _skills.Add(skill);
-    }
-
-    private sealed class SkillNameComparer : IEqualityComparer<Skill>
-    {
-        public static readonly SkillNameComparer Instance = new();
-
-        public bool Equals(Skill? x, Skill? y) =>
-            ReferenceEquals(x, y) ||
-            (x is not null && y is not null && string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase));
-
-        public int GetHashCode(Skill obj) =>
-            StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Name);
     }
 }
