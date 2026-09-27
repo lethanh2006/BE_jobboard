@@ -1,3 +1,5 @@
+using JobBoard.Application.Abstractions.Persistence;
+using JobBoard.Application.Exceptions;
 using JobBoard.Domain.Abstractions;
 using JobBoard.Domain.Entities;
 using JobBoard.Domain.Exceptions;
@@ -6,40 +8,53 @@ namespace JobBoard.Application.Applications;
 
 public sealed class ApplicationService
 {
-    public JobApplication Apply(
-        int applicationId,
-        Candidate candidate,
-        Job job,
-        IEnumerable<JobApplication> existingApplications,
+    private readonly IJobApplicationRepository _applications;
+    private readonly IClock _clock;
+    private readonly IJobRepository _jobs;
+
+    public ApplicationService(
+        IJobRepository jobs,
+        IJobApplicationRepository applications,
         IClock clock)
     {
-        ArgumentNullException.ThrowIfNull(candidate);
-        ArgumentNullException.ThrowIfNull(job);
-        ArgumentNullException.ThrowIfNull(existingApplications);
-        ArgumentNullException.ThrowIfNull(clock);
+        _jobs = jobs ?? throw new ArgumentNullException(nameof(jobs));
+        _applications = applications ?? throw new ArgumentNullException(nameof(applications));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+    }
+
+    public JobApplication Apply(int applicationId, int candidateId, int jobId)
+    {
+        var job = _jobs.GetById(jobId)
+            ?? throw new ResourceNotFoundException($"Không tìm thấy tin tuyển dụng có mã {jobId}.");
 
         if (job.Status != JobStatus.Published || job.IsExpired)
         {
             throw new JobClosedException("Tin tuyển dụng đã đóng hoặc hết hạn nhận hồ sơ.");
         }
 
-        if (existingApplications.Any(application =>
-                application.JobId == job.Id && application.CandidateId == candidate.Id))
+        if (_applications.HasApplied(candidateId, jobId))
         {
             throw new AlreadyAppliedException("Ứng viên đã ứng tuyển vào tin tuyển dụng này.");
         }
 
-        return new JobApplication(applicationId, job.Id, candidate.Id, clock.UtcNow);
+        var application = new JobApplication(applicationId, job.Id, candidateId, _clock.UtcNow);
+        _applications.Add(application);
+
+        return application;
     }
 
-    public void ChangeStatus(
-        JobApplication application,
-        ApplicationStatus status,
-        User manager,
-        Job job)
+    public JobApplication ChangeStatus(int applicationId, ApplicationStatus status, User manager)
     {
-        ArgumentNullException.ThrowIfNull(application);
+        ArgumentNullException.ThrowIfNull(manager);
+
+        var application = _applications.GetById(applicationId)
+            ?? throw new ResourceNotFoundException($"Không tìm thấy đơn ứng tuyển có mã {applicationId}.");
+        var job = _jobs.GetById(application.JobId)
+            ?? throw new ResourceNotFoundException($"Không tìm thấy tin tuyển dụng có mã {application.JobId}.");
 
         application.ChangeStatus(status, manager, job);
+        _applications.Update(application);
+
+        return application;
     }
 }

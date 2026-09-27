@@ -65,14 +65,15 @@ Do not commit secrets to appsettings files. Use environment variables or .NET us
 
 ## Current scope
 
-Milestone 1–4 đã thêm các entity domain cơ bản, value object `SalaryRange`,
+Milestone 1–5 đã thêm các entity domain cơ bản, value object `SalaryRange`,
 `Skill` và trạng thái tin tuyển dụng. `User` là lớp trừu tượng dùng chung cho
 `Candidate`, `Employer`, `AdminUser`; quyền quản lý tin được quyết định đa hình
 qua `CanManage()`. Các constructor bảo vệ invariant; `Job` nhận `IClock` để kiểm
 tra deadline mà không phụ thuộc trực tiếp vào thời gian hệ thống.
 `ApplicationService` bảo vệ luồng ứng tuyển khỏi tin đóng, tin hết hạn và đơn
-trùng; quyền đổi trạng thái đơn được kiểm tra qua chính mô hình domain.
+trùng; quyền đổi trạng thái đơn được kiểm tra qua chính mô hình domain. Service
+nhận repository qua constructor và chỉ phụ thuộc các interface ở Application.
 
-Chưa có repository, EF Core/PostgreSQL, auth, MediatR, AutoMapper, cache, queue
-hay background job; các phần này sẽ được thêm theo đúng milestone trong tài
-liệu kế hoạch.
+Chưa có repository hạ tầng, EF Core/PostgreSQL, auth, MediatR, AutoMapper,
+cache, queue hay background job; các phần này sẽ được thêm theo đúng milestone
+trong tài liệu kế hoạch.
