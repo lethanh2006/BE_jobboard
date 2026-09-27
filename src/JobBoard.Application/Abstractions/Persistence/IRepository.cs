@@ -3,9 +3,9 @@ namespace JobBoard.Application.Abstractions.Persistence;
 public interface IRepository<TEntity>
     where TEntity : class
 {
-    TEntity? GetById(int id);
+    Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
-    void Add(TEntity entity);
+    Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
 
-    void Update(TEntity entity);
+    Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
 }

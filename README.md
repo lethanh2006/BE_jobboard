@@ -65,7 +65,7 @@ Do not commit secrets to appsettings files. Use environment variables or .NET us
 
 ## Current scope
 
-Milestone 1–6 đã thêm các entity domain cơ bản, value object `SalaryRange`,
+Milestone 1–7 đã thêm các entity domain cơ bản, value object `SalaryRange`,
 `Skill` và trạng thái tin tuyển dụng. `User` là lớp trừu tượng dùng chung cho
 `Candidate`, `Employer`, `AdminUser`; quyền quản lý tin được quyết định đa hình
 qua `CanManage()`. Các constructor bảo vệ invariant; `Job` nhận `IClock` để kiểm
@@ -76,6 +76,8 @@ nhận repository qua constructor và chỉ phụ thuộc các interface ở App
 `JobSearchService` lọc và phân trang qua LINQ rồi trả DTO tóm tắt; các chiến
 lược chấm điểm kỹ năng/lương có thể ghép qua `CompositeScorer`. Sự kiện
 `Job.Published` cho phép thành phần khác lắng nghe mà không tạo dependency ngược.
+Các repository và use case dùng API bất đồng bộ; Infrastructure có repository
+đọc dữ liệu seed JSON và repository đơn ứng tuyển in-memory để chạy không cần DB.
 
 Chưa có repository hạ tầng, EF Core/PostgreSQL, auth, MediatR, AutoMapper,
 cache, queue hay background job; các phần này sẽ được thêm theo đúng milestone

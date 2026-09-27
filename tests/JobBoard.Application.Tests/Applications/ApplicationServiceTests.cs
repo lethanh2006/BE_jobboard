@@ -16,70 +16,70 @@ public sealed class ApplicationServiceTests
     private readonly InMemoryJobRepository _jobs = new();
 
     [Fact]
-    public void Apply_ToPublishedJob_CreatesAndPersistsSubmittedApplication()
+    public async Task Apply_ToPublishedJob_CreatesAndPersistsSubmittedApplication()
     {
         var job = AddJob();
         job.Publish();
         var service = CreateService();
 
-        var application = service.Apply(applicationId: 1, candidateId: 20, jobId: job.Id);
+        var application = await service.ApplyAsync(applicationId: 1, candidateId: 20, jobId: job.Id);
 
         Assert.Equal(job.Id, application.JobId);
         Assert.Equal(20, application.CandidateId);
         Assert.Equal(ApplicationStatus.Submitted, application.Status);
         Assert.Equal(Now, application.AppliedAt);
-        Assert.Same(application, _applications.GetById(application.Id));
+        Assert.Same(application, await _applications.GetByIdAsync(application.Id));
     }
 
     [Fact]
-    public void Apply_WhenJobDoesNotExist_Throws()
+    public async Task Apply_WhenJobDoesNotExist_Throws()
     {
         var service = CreateService();
 
-        Assert.Throws<ResourceNotFoundException>(() => service.Apply(1, 20, jobId: 999));
+        await Assert.ThrowsAsync<ResourceNotFoundException>(() => service.ApplyAsync(1, 20, jobId: 999));
     }
 
     [Fact]
-    public void Apply_ToDraftJob_Throws()
+    public async Task Apply_ToDraftJob_Throws()
     {
         var job = AddJob();
         var service = CreateService();
 
-        Assert.Throws<JobClosedException>(() => service.Apply(1, 20, job.Id));
+        await Assert.ThrowsAsync<JobClosedException>(() => service.ApplyAsync(1, 20, job.Id));
     }
 
     [Fact]
-    public void Apply_ToExpiredJob_Throws()
+    public async Task Apply_ToExpiredJob_Throws()
     {
         var job = AddJob();
         job.Publish();
         _clock.UtcNow = Now.AddDays(8);
         var service = CreateService();
 
-        Assert.Throws<JobClosedException>(() => service.Apply(1, 20, job.Id));
+        await Assert.ThrowsAsync<JobClosedException>(() => service.ApplyAsync(1, 20, job.Id));
     }
 
     [Fact]
-    public void Apply_WhenCandidateAlreadyApplied_Throws()
+    public async Task Apply_WhenCandidateAlreadyApplied_Throws()
     {
         var job = AddJob();
         job.Publish();
-        _applications.Add(new JobApplication(1, job.Id, candidateId: 20, Now.AddDays(-1)));
+        await _applications.AddAsync(new JobApplication(1, job.Id, candidateId: 20, Now.AddDays(-1)));
         var service = CreateService();
 
-        Assert.Throws<AlreadyAppliedException>(() => service.Apply(2, 20, job.Id));
+        await Assert.ThrowsAsync<AlreadyAppliedException>(() => service.ApplyAsync(2, 20, job.Id));
     }
 
     [Fact]
-    public void ChangeStatus_ByAuthorizedEmployer_UpdatesAndPersistsApplication()
+    public async Task ChangeStatus_ByAuthorizedEmployer_UpdatesAndPersistsApplication()
     {
         var job = AddJob();
         var application = new JobApplication(1, job.Id, candidateId: 20, Now);
         var employer = new Employer(30, "Trần Bình", "binh@example.com", new Company(job.CompanyId, "Công ty ABC"));
-        _applications.Add(application);
+        await _applications.AddAsync(application);
         var service = CreateService();
 
-        var result = service.ChangeStatus(application.Id, ApplicationStatus.Reviewing, employer);
+        var result = await service.ChangeStatusAsync(application.Id, ApplicationStatus.Reviewing, employer);
 
         Assert.Same(application, result);
         Assert.Equal(ApplicationStatus.Reviewing, application.Status);
@@ -87,13 +87,13 @@ public sealed class ApplicationServiceTests
     }
 
     [Fact]
-    public void ChangeStatus_WhenApplicationDoesNotExist_Throws()
+    public async Task ChangeStatus_WhenApplicationDoesNotExist_Throws()
     {
         var service = CreateService();
         var admin = new AdminUser(1, "Quản trị viên", "admin@example.com");
 
-        Assert.Throws<ResourceNotFoundException>(() =>
-            service.ChangeStatus(999, ApplicationStatus.Reviewing, admin));
+        await Assert.ThrowsAsync<ResourceNotFoundException>(() =>
+            service.ChangeStatusAsync(999, ApplicationStatus.Reviewing, admin));
     }
 
     private ApplicationService CreateService() => new(_jobs, _applications, _clock);
@@ -108,7 +108,7 @@ public sealed class ApplicationServiceTests
             Now.AddDays(7),
             _clock);
 
-        _jobs.Add(job);
+        _jobs.Seed(job);
         return job;
     }
 
@@ -116,13 +116,25 @@ public sealed class ApplicationServiceTests
     {
         private readonly Dictionary<int, Job> _jobs = [];
 
-        public Job? GetById(int id) => _jobs.GetValueOrDefault(id);
+        public void Seed(Job job) => _jobs.Add(job.Id, job);
 
-        public IReadOnlyCollection<Job> GetAll() => _jobs.Values;
+        public Task<Job?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(_jobs.GetValueOrDefault(id));
 
-        public void Add(Job entity) => _jobs.Add(entity.Id, entity);
+        public Task<IReadOnlyCollection<Job>> GetAllAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyCollection<Job>>(_jobs.Values);
 
-        public void Update(Job entity) => _jobs[entity.Id] = entity;
+        public Task AddAsync(Job entity, CancellationToken cancellationToken = default)
+        {
+            _jobs.Add(entity.Id, entity);
+            return Task.CompletedTask;
+        }
+
+        public Task UpdateAsync(Job entity, CancellationToken cancellationToken = default)
+        {
+            _jobs[entity.Id] = entity;
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class InMemoryJobApplicationRepository : IJobApplicationRepository
@@ -131,19 +143,28 @@ public sealed class ApplicationServiceTests
 
         public int UpdateCount { get; private set; }
 
-        public JobApplication? GetById(int id) => _applications.GetValueOrDefault(id);
+        public Task<JobApplication?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(_applications.GetValueOrDefault(id));
 
-        public void Add(JobApplication entity) => _applications.Add(entity.Id, entity);
+        public Task AddAsync(JobApplication entity, CancellationToken cancellationToken = default)
+        {
+            _applications.Add(entity.Id, entity);
+            return Task.CompletedTask;
+        }
 
-        public void Update(JobApplication entity)
+        public Task UpdateAsync(JobApplication entity, CancellationToken cancellationToken = default)
         {
             _applications[entity.Id] = entity;
             UpdateCount++;
+            return Task.CompletedTask;
         }
 
-        public bool HasApplied(int candidateId, int jobId) =>
-            _applications.Values.Any(application =>
-                application.CandidateId == candidateId && application.JobId == jobId);
+        public Task<bool> HasAppliedAsync(
+            int candidateId,
+            int jobId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(_applications.Values.Any(application =>
+                application.CandidateId == candidateId && application.JobId == jobId));
     }
 
     private sealed class MutableClock(DateTime utcNow) : IClock

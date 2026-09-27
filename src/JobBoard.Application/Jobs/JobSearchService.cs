@@ -8,7 +8,9 @@ public sealed class JobSearchService(IJobRepository jobs)
 {
     private readonly IJobRepository _jobs = jobs ?? throw new ArgumentNullException(nameof(jobs));
 
-    public PagedResult<JobSummaryDto> Search(SearchJobsQuery query)
+    public async Task<PagedResult<JobSummaryDto>> SearchAsync(
+        SearchJobsQuery query,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(query);
 
@@ -42,8 +44,8 @@ public sealed class JobSearchService(IJobRepository jobs)
             requiredSkills.Count == 0 || requiredSkills.All(requiredSkill =>
                 job.Skills.Any(skill => string.Equals(skill.Name, requiredSkill, StringComparison.OrdinalIgnoreCase)));
 
-        var filteredJobs = _jobs
-            .GetAll()
+        var jobs = await _jobs.GetAllAsync(cancellationToken);
+        var filteredJobs = jobs
             .Where(job => job.Status == JobStatus.Published && !job.IsExpired)
             .Where(job => matchesKeyword(job) && matchesSalary(job) && matchesSkills(job))
             .OrderByDescending(job => job.Salary.Max)

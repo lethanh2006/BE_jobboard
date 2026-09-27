@@ -4,5 +4,5 @@ namespace JobBoard.Application.Abstractions.Persistence;
 
 public interface IJobRepository : IRepository<Job>
 {
-    IReadOnlyCollection<Job> GetAll();
+    Task<IReadOnlyCollection<Job>> GetAllAsync(CancellationToken cancellationToken = default);
 }

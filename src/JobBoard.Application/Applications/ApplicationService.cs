@@ -22,9 +22,13 @@ public sealed class ApplicationService
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
-    public JobApplication Apply(int applicationId, int candidateId, int jobId)
+    public async Task<JobApplication> ApplyAsync(
+        int applicationId,
+        int candidateId,
+        int jobId,
+        CancellationToken cancellationToken = default)
     {
-        var job = _jobs.GetById(jobId)
+        var job = await _jobs.GetByIdAsync(jobId, cancellationToken)
             ?? throw new ResourceNotFoundException($"Không tìm thấy tin tuyển dụng có mã {jobId}.");
 
         if (job.Status != JobStatus.Published || job.IsExpired)
@@ -32,28 +36,32 @@ public sealed class ApplicationService
             throw new JobClosedException("Tin tuyển dụng đã đóng hoặc hết hạn nhận hồ sơ.");
         }
 
-        if (_applications.HasApplied(candidateId, jobId))
+        if (await _applications.HasAppliedAsync(candidateId, jobId, cancellationToken))
         {
             throw new AlreadyAppliedException("Ứng viên đã ứng tuyển vào tin tuyển dụng này.");
         }
 
         var application = new JobApplication(applicationId, job.Id, candidateId, _clock.UtcNow);
-        _applications.Add(application);
+        await _applications.AddAsync(application, cancellationToken);
 
         return application;
     }
 
-    public JobApplication ChangeStatus(int applicationId, ApplicationStatus status, User manager)
+    public async Task<JobApplication> ChangeStatusAsync(
+        int applicationId,
+        ApplicationStatus status,
+        User manager,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(manager);
 
-        var application = _applications.GetById(applicationId)
+        var application = await _applications.GetByIdAsync(applicationId, cancellationToken)
             ?? throw new ResourceNotFoundException($"Không tìm thấy đơn ứng tuyển có mã {applicationId}.");
-        var job = _jobs.GetById(application.JobId)
+        var job = await _jobs.GetByIdAsync(application.JobId, cancellationToken)
             ?? throw new ResourceNotFoundException($"Không tìm thấy tin tuyển dụng có mã {application.JobId}.");
 
         application.ChangeStatus(status, manager, job);
-        _applications.Update(application);
+        await _applications.UpdateAsync(application, cancellationToken);
 
         return application;
     }

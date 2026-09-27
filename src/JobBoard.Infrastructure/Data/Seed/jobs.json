@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "title": "Backend Developer (.NET)",
+    "companyId": 1,
+    "salaryMin": 1800,
+    "salaryMax": 3000,
+    "deadline": "2030-12-31T23:59:59Z",
+    "status": "Published",
+    "skills": ["C#", "ASP.NET Core", "PostgreSQL"]
+  },
+  {
+    "id": 2,
+    "title": "Frontend Developer (Next.js)",
+    "companyId": 1,
+    "salaryMin": 1500,
+    "salaryMax": 2500,
+    "deadline": "2030-12-31T23:59:59Z",
+    "status": "Published",
+    "skills": ["TypeScript", "React", "Next.js"]
+  },
+  {
+    "id": 3,
+    "title": "DevOps Engineer",
+    "companyId": 2,
+    "salaryMin": 2000,
+    "salaryMax": 3500,
+    "deadline": "2030-12-31T23:59:59Z",
+    "status": "Draft",
+    "skills": ["Docker", "Linux", "GitHub Actions"]
+  }
+]
