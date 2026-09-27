@@ -36,4 +36,39 @@ public sealed class CandidateTests
 
         Assert.Equal("email", exception.ParamName);
     }
+
+    [Fact]
+    public void Constructor_WithEmailMissingAtSign_Throws()
+    {
+        var exception = Assert.Throws<ArgumentException>(() => new Candidate(1, "Nguyễn An", "invalid-email"));
+
+        Assert.Equal("email", exception.ParamName);
+    }
+
+    [Fact]
+    public void ChangeEmail_WithValidEmail_UpdatesEmail()
+    {
+        var candidate = new Candidate(1, "Nguyễn An", "old@example.com");
+
+        candidate.ChangeEmail("  new@example.com  ");
+
+        Assert.Equal("new@example.com", candidate.Email);
+    }
+
+    [Fact]
+    public void ChangeEmail_WithInvalidEmail_PreservesCurrentEmail()
+    {
+        var candidate = new Candidate(1, "Nguyễn An", "old@example.com");
+
+        Assert.Throws<ArgumentException>(() => candidate.ChangeEmail("invalid-email"));
+        Assert.Equal("old@example.com", candidate.Email);
+    }
+
+    [Fact]
+    public void GetDisplayName_ReturnsCandidateName()
+    {
+        var candidate = new Candidate(1, "Nguyễn An", "an@example.com");
+
+        Assert.Equal("Nguyễn An", candidate.GetDisplayName());
+    }
 }
