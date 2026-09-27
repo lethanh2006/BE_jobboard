@@ -65,6 +65,10 @@ Do not commit secrets to appsettings files. Use environment variables or .NET us
 
 ## Current scope
 
-Base này chỉ chứa solution, project references và cấu hình API tối thiểu. Chưa
-có entity, service, repository, test nghiệp vụ, EF Core/PostgreSQL, auth,
-MediatR, AutoMapper, cache, queue hay background job.
+Milestone 1 đã thêm các entity domain cơ bản `Company`, `Candidate`, `Job` với
+constructor bảo vệ invariant và unit test xUnit. `Job` nhận `IClock` để kiểm tra
+deadline mà không phụ thuộc trực tiếp vào thời gian hệ thống.
+
+Chưa có service, repository, EF Core/PostgreSQL, auth, MediatR, AutoMapper,
+cache, queue hay background job; các phần này sẽ được thêm theo đúng milestone
+trong tài liệu kế hoạch.
