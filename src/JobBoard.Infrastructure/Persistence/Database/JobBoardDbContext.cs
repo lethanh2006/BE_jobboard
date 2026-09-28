@@ -18,6 +18,7 @@ public sealed class JobBoardDbContext(DbContextOptions<JobBoardDbContext> option
     {
         modelBuilder.HasSequence<int>("job_ids").StartsAt(7);
         modelBuilder.HasSequence<int>("application_ids").StartsAt(4);
+        modelBuilder.HasSequence<int>("user_ids").StartsAt(101);
 
         modelBuilder.Entity<JobRecord>(entity =>
         {

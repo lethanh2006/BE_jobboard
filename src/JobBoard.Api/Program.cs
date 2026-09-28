@@ -72,7 +72,11 @@ if (usePostgres)
 
     builder.Services.AddDbContext<JobBoardDbContext>(options =>
         options.UseNpgsql(connectionString));
-    builder.Services.AddScoped<IUserAccountRepository, PostgresUserAccountRepository>();
+    builder.Services.AddScoped<PostgresUserAccountRepository>();
+    builder.Services.AddScoped<IUserAccountRepository>(serviceProvider =>
+        serviceProvider.GetRequiredService<PostgresUserAccountRepository>());
+    builder.Services.AddScoped<IAccountRegistrationRepository>(serviceProvider =>
+        serviceProvider.GetRequiredService<PostgresUserAccountRepository>());
     builder.Services.AddScoped<IRefreshTokenRepository, PostgresRefreshTokenRepository>();
     builder.Services.AddScoped<IJobRepository, PostgresJobRepository>();
     builder.Services.AddScoped<IJobApplicationRepository, PostgresJobApplicationRepository>();
@@ -81,7 +85,6 @@ if (usePostgres)
 }
 else
 {
-    builder.Services.AddSingleton<IUserAccountRepository, InMemoryUserAccountRepository>();
     builder.Services.AddSingleton<IRefreshTokenRepository, InMemoryRefreshTokenRepository>();
     builder.Services.AddSingleton<IJobRepository>(serviceProvider =>
     {
@@ -90,8 +93,14 @@ else
     });
     builder.Services.AddSingleton<IJobApplicationRepository>(
         new InMemoryJobApplicationRepository(seedDemoData: true));
-    builder.Services.AddSingleton<ICandidateRepository>(
-        new InMemoryCandidateRepository(seedDemoData: true));
+    builder.Services.AddSingleton(new InMemoryCandidateRepository(seedDemoData: true));
+    builder.Services.AddSingleton<ICandidateRepository>(serviceProvider =>
+        serviceProvider.GetRequiredService<InMemoryCandidateRepository>());
+    builder.Services.AddSingleton<InMemoryUserAccountRepository>();
+    builder.Services.AddSingleton<IUserAccountRepository>(serviceProvider =>
+        serviceProvider.GetRequiredService<InMemoryUserAccountRepository>());
+    builder.Services.AddSingleton<IAccountRegistrationRepository>(serviceProvider =>
+        serviceProvider.GetRequiredService<InMemoryUserAccountRepository>());
 }
 
 builder.Services.AddScoped<JobSearchService>();
@@ -102,6 +111,7 @@ builder.Services.AddScoped<ApplicationQueryService>();
 builder.Services.AddScoped<CandidateProfileService>();
 builder.Services.AddScoped<LoginService>();
 builder.Services.AddScoped<SessionService>();
+builder.Services.AddScoped<RegistrationService>();
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

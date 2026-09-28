@@ -129,6 +129,9 @@ Web API hiện cung cấp:
 - `GET /api/jobs/{id}` lấy đầy đủ nội dung một tin tuyển dụng.
 - `POST /api/auth/login` xác thực tài khoản và cấp JWT; `GET /api/auth/me` đọc
   người dùng hiện tại.
+- `POST /api/auth/register/candidate` tạo đồng thời tài khoản và hồ sơ ứng viên,
+  rồi cấp phiên đăng nhập đầu tiên. Email được chuẩn hóa và bảo vệ bằng unique
+  constraint trong PostgreSQL.
 - `POST /api/auth/refresh` xoay refresh token một lần và cấp access token mới;
   tái sử dụng token cũ sẽ thu hồi toàn bộ token cùng phiên.
 - `POST /api/auth/logout` thu hồi refresh token hiện tại ở phía server.
@@ -147,7 +150,7 @@ Lỗi validation/nghiệp vụ được chuẩn hóa về `ProblemDetails`. Dữ
 việc, nội dung chi tiết, kỹ năng và thời hạn.
 
 Xác thực hiện dùng JWT, PBKDF2 và refresh token rotation có phát hiện reuse;
-account, phiên, hồ sơ, tin và đơn có thể được lưu bền vững bằng PostgreSQL. Chưa
-có đăng ký/xác minh email, khôi phục mật khẩu, MediatR, AutoMapper, cache, queue
-hay background job; các phần này sẽ được thêm theo đúng milestone trong tài liệu
-kế hoạch.
+ứng viên có thể tự đăng ký và được tạo hồ sơ trong cùng transaction. Account,
+phiên, hồ sơ, tin và đơn có thể được lưu bền vững bằng PostgreSQL. Chưa có xác
+minh email, khôi phục mật khẩu, MediatR, AutoMapper, cache, queue hay background
+job; các phần này sẽ được thêm theo đúng milestone trong tài liệu kế hoạch.

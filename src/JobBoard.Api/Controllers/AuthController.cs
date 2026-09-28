@@ -10,7 +10,8 @@ namespace JobBoard.Api.Controllers;
 [Route("api/auth")]
 public sealed class AuthController(
     LoginService loginService,
-    SessionService sessionService) : ControllerBase
+    SessionService sessionService,
+    RegistrationService registrationService) : ControllerBase
 {
     [AllowAnonymous]
     [HttpPost("login")]
@@ -21,6 +22,24 @@ public sealed class AuthController(
         CancellationToken cancellationToken)
     {
         return Ok(await loginService.LoginAsync(request.Email, request.Password, cancellationToken));
+    }
+
+    [AllowAnonymous]
+    [HttpPost("register/candidate")]
+    [ProducesResponseType<LoginResult>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<LoginResult>> RegisterCandidate(
+        RegisterCandidateRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await registrationService.RegisterCandidateAsync(
+            request.Name,
+            request.Email,
+            request.Password,
+            cancellationToken);
+
+        return Created($"/api/candidates/{result.User.Id}/profile", result);
     }
 
     [AllowAnonymous]
