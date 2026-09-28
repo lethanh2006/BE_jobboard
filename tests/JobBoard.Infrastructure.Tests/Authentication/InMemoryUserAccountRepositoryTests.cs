@@ -43,4 +43,26 @@ public sealed class InMemoryUserAccountRepositoryTests
         Assert.Equal(candidate.Id, (await candidates.GetByIdAsync(candidate.Id))?.Id);
         Assert.False(await repository.RegisterCandidateAsync(account, candidate));
     }
+
+    [Fact]
+    public async Task TryUpdatePasswordHashAsync_OnlyUpdatesMatchingPasswordHash()
+    {
+        var hasher = new Pbkdf2PasswordHasher();
+        var repository = new InMemoryUserAccountRepository(hasher);
+        var account = await repository.FindByIdAsync(20);
+        Assert.NotNull(account);
+
+        var staleUpdate = await repository.TryUpdatePasswordHashAsync(
+            account.Id,
+            "stale-hash",
+            "new-hash");
+        var successfulUpdate = await repository.TryUpdatePasswordHashAsync(
+            account.Id,
+            account.PasswordHash,
+            "new-hash");
+
+        Assert.False(staleUpdate);
+        Assert.True(successfulUpdate);
+        Assert.Equal("new-hash", (await repository.FindByIdAsync(account.Id))?.PasswordHash);
+    }
 }

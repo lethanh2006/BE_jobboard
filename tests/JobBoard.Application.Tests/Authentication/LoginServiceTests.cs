@@ -159,5 +159,11 @@ public sealed class LoginServiceTests
             DateTime revokedAt,
             CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
+
+        public Task RevokeByUserAsync(
+            int userId,
+            DateTime revokedAt,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
     }
 }

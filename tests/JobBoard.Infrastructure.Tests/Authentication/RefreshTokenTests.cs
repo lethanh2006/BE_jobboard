@@ -64,6 +64,31 @@ public sealed class RefreshTokenTests
         Assert.Null(await repository.FindByHashAsync(secondReplacement.TokenHash));
     }
 
+    [Fact]
+    public async Task RevokeByUserAsync_RevokesOnlyThatUsersActiveSessions()
+    {
+        var repository = new InMemoryRefreshTokenRepository();
+        var firstUserSession = RefreshTokenSession.Create(
+            20,
+            Guid.NewGuid(),
+            "first-user-hash",
+            Now,
+            Now.AddDays(7));
+        var otherUserSession = RefreshTokenSession.Create(
+            21,
+            Guid.NewGuid(),
+            "other-user-hash",
+            Now,
+            Now.AddDays(7));
+        await repository.AddAsync(firstUserSession);
+        await repository.AddAsync(otherUserSession);
+
+        await repository.RevokeByUserAsync(20, Now.AddMinutes(1));
+
+        Assert.NotNull((await repository.FindByHashAsync(firstUserSession.TokenHash))?.RevokedAt);
+        Assert.Null((await repository.FindByHashAsync(otherUserSession.TokenHash))?.RevokedAt);
+    }
+
     private sealed class FixedClock(DateTime utcNow) : IClock
     {
         public DateTime UtcNow { get; } = utcNow;

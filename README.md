@@ -135,6 +135,8 @@ Web API hiện cung cấp:
 - `POST /api/auth/refresh` xoay refresh token một lần và cấp access token mới;
   tái sử dụng token cũ sẽ thu hồi toàn bộ token cùng phiên.
 - `POST /api/auth/logout` thu hồi refresh token hiện tại ở phía server.
+- `PUT /api/auth/password` xác minh mật khẩu hiện tại, cập nhật mật khẩu mới và
+  thu hồi toàn bộ refresh token của tài khoản.
 - `POST /api/applications` nộp đơn bằng danh tính ứng viên trong JWT và tự cấp
   mã đơn ở phía server.
 - `GET /api/candidates/{id}/applications` xem lịch sử của chính ứng viên.
@@ -150,7 +152,8 @@ Lỗi validation/nghiệp vụ được chuẩn hóa về `ProblemDetails`. Dữ
 việc, nội dung chi tiết, kỹ năng và thời hạn.
 
 Xác thực hiện dùng JWT, PBKDF2 và refresh token rotation có phát hiện reuse;
-ứng viên có thể tự đăng ký và được tạo hồ sơ trong cùng transaction. Account,
+người dùng có thể đổi mật khẩu và buộc các phiên dùng refresh token đăng nhập
+lại. Ứng viên có thể tự đăng ký và được tạo hồ sơ trong cùng transaction. Account,
 phiên, hồ sơ, tin và đơn có thể được lưu bền vững bằng PostgreSQL. Chưa có xác
 minh email, khôi phục mật khẩu, MediatR, AutoMapper, cache, queue hay background
 job; các phần này sẽ được thêm theo đúng milestone trong tài liệu kế hoạch.

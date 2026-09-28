@@ -143,6 +143,12 @@ public sealed class SessionServiceTests
             RevokedFamilyId = familyId;
             return Task.CompletedTask;
         }
+
+        public Task RevokeByUserAsync(
+            int userId,
+            DateTime revokedAt,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
     }
 
     private sealed class StubRefreshTokenGenerator : IRefreshTokenGenerator

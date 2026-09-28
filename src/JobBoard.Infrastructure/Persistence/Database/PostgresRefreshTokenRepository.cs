@@ -78,4 +78,14 @@ public sealed class PostgresRefreshTokenRepository(JobBoardDbContext dbContext)
             .ExecuteUpdateAsync(
                 setters => setters.SetProperty(token => token.RevokedAt, revokedAt),
                 cancellationToken);
+
+    public Task RevokeByUserAsync(
+        int userId,
+        DateTime revokedAt,
+        CancellationToken cancellationToken = default) =>
+        _dbContext.RefreshTokens
+            .Where(token => token.UserId == userId && token.RevokedAt == null)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(token => token.RevokedAt, revokedAt),
+                cancellationToken);
 }

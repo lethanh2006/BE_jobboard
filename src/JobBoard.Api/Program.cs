@@ -77,6 +77,8 @@ if (usePostgres)
         serviceProvider.GetRequiredService<PostgresUserAccountRepository>());
     builder.Services.AddScoped<IAccountRegistrationRepository>(serviceProvider =>
         serviceProvider.GetRequiredService<PostgresUserAccountRepository>());
+    builder.Services.AddScoped<IAccountSecurityRepository>(serviceProvider =>
+        serviceProvider.GetRequiredService<PostgresUserAccountRepository>());
     builder.Services.AddScoped<IRefreshTokenRepository, PostgresRefreshTokenRepository>();
     builder.Services.AddScoped<IJobRepository, PostgresJobRepository>();
     builder.Services.AddScoped<IJobApplicationRepository, PostgresJobApplicationRepository>();
@@ -101,6 +103,8 @@ else
         serviceProvider.GetRequiredService<InMemoryUserAccountRepository>());
     builder.Services.AddSingleton<IAccountRegistrationRepository>(serviceProvider =>
         serviceProvider.GetRequiredService<InMemoryUserAccountRepository>());
+    builder.Services.AddSingleton<IAccountSecurityRepository>(serviceProvider =>
+        serviceProvider.GetRequiredService<InMemoryUserAccountRepository>());
 }
 
 builder.Services.AddScoped<JobSearchService>();
@@ -112,6 +116,7 @@ builder.Services.AddScoped<CandidateProfileService>();
 builder.Services.AddScoped<LoginService>();
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<RegistrationService>();
+builder.Services.AddScoped<PasswordChangeService>();
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

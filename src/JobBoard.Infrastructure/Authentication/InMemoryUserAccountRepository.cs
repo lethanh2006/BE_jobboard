@@ -8,7 +8,8 @@ namespace JobBoard.Infrastructure.Authentication;
 
 public sealed class InMemoryUserAccountRepository :
     IUserAccountRepository,
-    IAccountRegistrationRepository
+    IAccountRegistrationRepository,
+    IAccountSecurityRepository
 {
     private readonly ConcurrentDictionary<string, UserAccount> _accounts;
     private readonly ICandidateRepository? _candidates;
@@ -110,6 +111,31 @@ public sealed class InMemoryUserAccountRepository :
         {
             _accounts.TryRemove(account.Email, out _);
             throw;
+        }
+    }
+
+    public Task<bool> TryUpdatePasswordHashAsync(
+        int userId,
+        string expectedPasswordHash,
+        string newPasswordHash,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        while (true)
+        {
+            var current = _accounts.Values.SingleOrDefault(account => account.Id == userId);
+            if (current is null ||
+                !string.Equals(current.PasswordHash, expectedPasswordHash, StringComparison.Ordinal))
+            {
+                return Task.FromResult(false);
+            }
+
+            var updated = current with { PasswordHash = newPasswordHash };
+            if (_accounts.TryUpdate(current.Email, updated, current))
+            {
+                return Task.FromResult(true);
+            }
         }
     }
 }

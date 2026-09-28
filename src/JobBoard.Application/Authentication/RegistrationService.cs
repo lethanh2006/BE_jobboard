@@ -29,7 +29,7 @@ public sealed class RegistrationService(
         string password,
         CancellationToken cancellationToken = default)
     {
-        ValidatePassword(password);
+        PasswordPolicy.Validate(password);
         var normalizedName = name?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(normalizedName))
         {
@@ -87,18 +87,4 @@ public sealed class RegistrationService(
         return normalizedEmail;
     }
 
-    private static void ValidatePassword(string password)
-    {
-        if (string.IsNullOrWhiteSpace(password) ||
-            password.Length < 10 ||
-            !password.Any(char.IsUpper) ||
-            !password.Any(char.IsLower) ||
-            !password.Any(char.IsDigit) ||
-            !password.Any(character => !char.IsLetterOrDigit(character)))
-        {
-            throw new ArgumentException(
-                "Mật khẩu phải có ít nhất 10 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.",
-                nameof(password));
-        }
-    }
 }

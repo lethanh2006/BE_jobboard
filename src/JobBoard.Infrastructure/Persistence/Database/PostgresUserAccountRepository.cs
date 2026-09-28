@@ -7,7 +7,7 @@ using Npgsql;
 namespace JobBoard.Infrastructure.Persistence.Database;
 
 public sealed class PostgresUserAccountRepository(JobBoardDbContext dbContext)
-    : IUserAccountRepository, IAccountRegistrationRepository
+    : IUserAccountRepository, IAccountRegistrationRepository, IAccountSecurityRepository
 {
     private readonly JobBoardDbContext _dbContext =
         dbContext ?? throw new ArgumentNullException(nameof(dbContext));
@@ -72,5 +72,23 @@ public sealed class PostgresUserAccountRepository(JobBoardDbContext dbContext)
             await transaction.RollbackAsync(cancellationToken);
             return false;
         }
+    }
+
+    public async Task<bool> TryUpdatePasswordHashAsync(
+        int userId,
+        string expectedPasswordHash,
+        string newPasswordHash,
+        CancellationToken cancellationToken = default)
+    {
+        var updatedRows = await _dbContext.UserAccounts
+            .Where(account =>
+                account.Id == userId && account.PasswordHash == expectedPasswordHash)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(
+                    account => account.PasswordHash,
+                    newPasswordHash),
+                cancellationToken);
+
+        return updatedRows == 1;
     }
 }

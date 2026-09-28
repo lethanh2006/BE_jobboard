@@ -28,4 +28,9 @@ public interface IRefreshTokenRepository
         Guid familyId,
         DateTime revokedAt,
         CancellationToken cancellationToken = default);
+
+    Task RevokeByUserAsync(
+        int userId,
+        DateTime revokedAt,
+        CancellationToken cancellationToken = default);
 }

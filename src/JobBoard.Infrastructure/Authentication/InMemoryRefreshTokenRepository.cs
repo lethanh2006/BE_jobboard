@@ -88,6 +88,24 @@ public sealed class InMemoryRefreshTokenRepository : IRefreshTokenRepository
         return Task.CompletedTask;
     }
 
+    public Task RevokeByUserAsync(
+        int userId,
+        DateTime revokedAt,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (_syncRoot)
+        {
+            foreach (var session in _sessions.Values.Where(
+                session => session.UserId == userId && session.RevokedAt is null))
+            {
+                session.Revoke(revokedAt);
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
     private static RefreshTokenSession Clone(RefreshTokenSession session) =>
         RefreshTokenSession.Restore(
             session.Id,

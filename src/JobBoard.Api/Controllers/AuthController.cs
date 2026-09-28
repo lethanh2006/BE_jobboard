@@ -11,7 +11,8 @@ namespace JobBoard.Api.Controllers;
 public sealed class AuthController(
     LoginService loginService,
     SessionService sessionService,
-    RegistrationService registrationService) : ControllerBase
+    RegistrationService registrationService,
+    PasswordChangeService passwordChangeService) : ControllerBase
 {
     [AllowAnonymous]
     [HttpPost("login")]
@@ -61,6 +62,24 @@ public sealed class AuthController(
         CancellationToken cancellationToken)
     {
         await sessionService.LogoutAsync(request.RefreshToken, cancellationToken);
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpPut("password")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ChangePassword(
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        await passwordChangeService.ChangeAsync(
+            User.GetRequiredUserId(),
+            request.CurrentPassword,
+            request.NewPassword,
+            cancellationToken);
+
         return NoContent();
     }
 

@@ -18,6 +18,7 @@ public sealed class ApiExceptionHandler(
         {
             InvalidCredentialsException => (StatusCodes.Status401Unauthorized, "Đăng nhập thất bại"),
             InvalidRefreshTokenException => (StatusCodes.Status401Unauthorized, "Phiên đăng nhập không hợp lệ"),
+            CurrentPasswordIncorrectException => (StatusCodes.Status400BadRequest, "Không thể đổi mật khẩu"),
             EmailAlreadyExistsException => (StatusCodes.Status409Conflict, "Email đã tồn tại"),
             ResourceNotFoundException => (StatusCodes.Status404NotFound, "Không tìm thấy tài nguyên"),
             JobManagementForbiddenException => (StatusCodes.Status403Forbidden, "Không có quyền thực hiện"),
