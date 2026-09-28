@@ -49,4 +49,12 @@ public sealed class InMemoryUserAccountRepository : IUserAccountRepository
         _accounts.TryGetValue(normalizedEmail, out var account);
         return Task.FromResult(account);
     }
+
+    public Task<UserAccount?> FindByIdAsync(
+        int id,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(_accounts.Values.SingleOrDefault(account => account.Id == id));
+    }
 }

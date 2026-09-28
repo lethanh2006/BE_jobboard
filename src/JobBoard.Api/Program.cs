@@ -39,6 +39,7 @@ var usePostgres = persistenceProvider switch
 if (string.IsNullOrWhiteSpace(jwtOptions.Issuer) ||
     string.IsNullOrWhiteSpace(jwtOptions.Audience) ||
     jwtOptions.AccessTokenMinutes <= 0 ||
+    jwtOptions.RefreshTokenDays <= 0 ||
     Encoding.UTF8.GetByteCount(jwtOptions.SigningKey) < 32)
 {
     throw new InvalidOperationException(
@@ -55,6 +56,10 @@ builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddSingleton(jwtOptions);
 builder.Services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
 builder.Services.AddSingleton<IAccessTokenGenerator, JwtAccessTokenGenerator>();
+builder.Services.AddSingleton<IRefreshTokenGenerator>(serviceProvider =>
+    new SecureRefreshTokenGenerator(
+        serviceProvider.GetRequiredService<IClock>(),
+        TimeSpan.FromDays(jwtOptions.RefreshTokenDays)));
 
 if (usePostgres)
 {
@@ -68,6 +73,7 @@ if (usePostgres)
     builder.Services.AddDbContext<JobBoardDbContext>(options =>
         options.UseNpgsql(connectionString));
     builder.Services.AddScoped<IUserAccountRepository, PostgresUserAccountRepository>();
+    builder.Services.AddScoped<IRefreshTokenRepository, PostgresRefreshTokenRepository>();
     builder.Services.AddScoped<IJobRepository, PostgresJobRepository>();
     builder.Services.AddScoped<IJobApplicationRepository, PostgresJobApplicationRepository>();
     builder.Services.AddScoped<ICandidateRepository, PostgresCandidateRepository>();
@@ -76,6 +82,7 @@ if (usePostgres)
 else
 {
     builder.Services.AddSingleton<IUserAccountRepository, InMemoryUserAccountRepository>();
+    builder.Services.AddSingleton<IRefreshTokenRepository, InMemoryRefreshTokenRepository>();
     builder.Services.AddSingleton<IJobRepository>(serviceProvider =>
     {
         var seedFilePath = Path.Combine(AppContext.BaseDirectory, "Data", "Seed", "jobs.json");
@@ -94,6 +101,7 @@ builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<ApplicationQueryService>();
 builder.Services.AddScoped<CandidateProfileService>();
 builder.Services.AddScoped<LoginService>();
+builder.Services.AddScoped<SessionService>();
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

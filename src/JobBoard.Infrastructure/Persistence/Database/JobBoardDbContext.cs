@@ -12,6 +12,8 @@ public sealed class JobBoardDbContext(DbContextOptions<JobBoardDbContext> option
 
     public DbSet<UserAccountRecord> UserAccounts => Set<UserAccountRecord>();
 
+    public DbSet<RefreshTokenRecord> RefreshTokens => Set<RefreshTokenRecord>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasSequence<int>("job_ids").StartsAt(7);
@@ -77,6 +79,21 @@ public sealed class JobBoardDbContext(DbContextOptions<JobBoardDbContext> option
             entity.Property(account => account.Role).HasConversion<string>().HasMaxLength(32);
             entity.Property(account => account.CompanyName).HasMaxLength(200);
             entity.HasIndex(account => account.Email).IsUnique();
+        });
+
+        modelBuilder.Entity<RefreshTokenRecord>(entity =>
+        {
+            entity.ToTable("refresh_tokens");
+            entity.HasKey(token => token.Id);
+            entity.Property(token => token.TokenHash).HasMaxLength(64).IsFixedLength();
+            entity.Property(token => token.ReplacedByTokenHash).HasMaxLength(64).IsFixedLength();
+            entity.HasIndex(token => token.TokenHash).IsUnique();
+            entity.HasIndex(token => token.FamilyId);
+            entity.HasIndex(token => new { token.UserId, token.ExpiresAt });
+            entity.HasOne<UserAccountRecord>()
+                .WithMany()
+                .HasForeignKey(token => token.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

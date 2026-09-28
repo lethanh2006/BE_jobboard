@@ -10,6 +10,17 @@ public sealed class PostgresUserAccountRepository(JobBoardDbContext dbContext)
     private readonly JobBoardDbContext _dbContext =
         dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
+    public async Task<UserAccount?> FindByIdAsync(
+        int id,
+        CancellationToken cancellationToken = default)
+    {
+        var record = await _dbContext.UserAccounts
+            .AsNoTracking()
+            .SingleOrDefaultAsync(account => account.Id == id, cancellationToken);
+
+        return record?.ToDomain();
+    }
+
     public async Task<UserAccount?> FindByEmailAsync(
         string normalizedEmail,
         CancellationToken cancellationToken = default)

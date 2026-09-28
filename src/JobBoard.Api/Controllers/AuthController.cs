@@ -8,7 +8,9 @@ namespace JobBoard.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(LoginService loginService) : ControllerBase
+public sealed class AuthController(
+    LoginService loginService,
+    SessionService sessionService) : ControllerBase
 {
     [AllowAnonymous]
     [HttpPost("login")]
@@ -19,6 +21,28 @@ public sealed class AuthController(LoginService loginService) : ControllerBase
         CancellationToken cancellationToken)
     {
         return Ok(await loginService.LoginAsync(request.Email, request.Password, cancellationToken));
+    }
+
+    [AllowAnonymous]
+    [HttpPost("refresh")]
+    [ProducesResponseType<LoginResult>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<LoginResult>> Refresh(
+        RefreshTokenRequest request,
+        CancellationToken cancellationToken)
+    {
+        return Ok(await sessionService.RefreshAsync(request.RefreshToken, cancellationToken));
+    }
+
+    [AllowAnonymous]
+    [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Logout(
+        RefreshTokenRequest request,
+        CancellationToken cancellationToken)
+    {
+        await sessionService.LogoutAsync(request.RefreshToken, cancellationToken);
+        return NoContent();
     }
 
     [Authorize]

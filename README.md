@@ -101,7 +101,9 @@ Both persistence providers seed these local-development users when empty:
 | Admin | `admin@jobboard.vn` | `JobBoard@123` |
 
 Passwords are stored as salted PBKDF2 hashes. `POST /api/auth/login` returns a
-short-lived bearer token; `GET /api/auth/me` returns its current principal.
+15-minute bearer token and a seven-day rotating refresh token; only the refresh
+token's SHA-256 hash is persisted. `GET /api/auth/me` returns the current
+principal.
 
 ## Current scope
 
@@ -127,6 +129,9 @@ Web API hiện cung cấp:
 - `GET /api/jobs/{id}` lấy đầy đủ nội dung một tin tuyển dụng.
 - `POST /api/auth/login` xác thực tài khoản và cấp JWT; `GET /api/auth/me` đọc
   người dùng hiện tại.
+- `POST /api/auth/refresh` xoay refresh token một lần và cấp access token mới;
+  tái sử dụng token cũ sẽ thu hồi toàn bộ token cùng phiên.
+- `POST /api/auth/logout` thu hồi refresh token hiện tại ở phía server.
 - `POST /api/applications` nộp đơn bằng danh tính ứng viên trong JWT và tự cấp
   mã đơn ở phía server.
 - `GET /api/candidates/{id}/applications` xem lịch sử của chính ứng viên.
@@ -141,7 +146,8 @@ Lỗi validation/nghiệp vụ được chuẩn hóa về `ProblemDetails`. Dữ
 đã có cùng contract mà frontend cần: công ty, địa điểm, cấp bậc, hình thức làm
 việc, nội dung chi tiết, kỹ năng và thời hạn.
 
-Xác thực hiện dùng JWT và PBKDF2; account, hồ sơ, tin và đơn có thể được lưu bền
-vững bằng PostgreSQL. Chưa có refresh token, thu hồi phiên, MediatR, AutoMapper,
-cache, queue hay background job; các phần này sẽ được thêm theo đúng milestone
-trong tài liệu kế hoạch.
+Xác thực hiện dùng JWT, PBKDF2 và refresh token rotation có phát hiện reuse;
+account, phiên, hồ sơ, tin và đơn có thể được lưu bền vững bằng PostgreSQL. Chưa
+có đăng ký/xác minh email, khôi phục mật khẩu, MediatR, AutoMapper, cache, queue
+hay background job; các phần này sẽ được thêm theo đúng milestone trong tài liệu
+kế hoạch.

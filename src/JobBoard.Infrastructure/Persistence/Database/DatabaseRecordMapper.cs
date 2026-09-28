@@ -168,4 +168,28 @@ internal static class DatabaseRecordMapper
             CompanyId = account.CompanyId,
             CompanyName = account.CompanyName
         };
+
+    public static RefreshTokenSession ToDomain(this RefreshTokenRecord record) =>
+        RefreshTokenSession.Restore(
+            record.Id,
+            record.UserId,
+            record.FamilyId,
+            record.TokenHash,
+            record.CreatedAt,
+            record.ExpiresAt,
+            record.RevokedAt,
+            record.ReplacedByTokenHash);
+
+    public static RefreshTokenRecord ToRecord(this RefreshTokenSession session) =>
+        new()
+        {
+            Id = session.Id,
+            UserId = session.UserId,
+            FamilyId = session.FamilyId,
+            TokenHash = session.TokenHash,
+            CreatedAt = session.CreatedAt,
+            ExpiresAt = session.ExpiresAt,
+            RevokedAt = session.RevokedAt,
+            ReplacedByTokenHash = session.ReplacedByTokenHash
+        };
 }

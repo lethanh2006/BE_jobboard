@@ -22,5 +22,11 @@ public sealed class JobBoardDbContextModelTests
         Assert.NotNull(uniqueIndex);
         Assert.Equal(7, dbContext.Model.FindSequence("job_ids")?.StartValue);
         Assert.Equal(4, dbContext.Model.FindSequence("application_ids")?.StartValue);
+
+        var refreshToken = dbContext.Model.FindEntityType(typeof(RefreshTokenRecord));
+        Assert.Contains(
+            refreshToken!.GetIndexes(),
+            index => index.IsUnique &&
+                index.Properties.Single().Name == nameof(RefreshTokenRecord.TokenHash));
     }
 }

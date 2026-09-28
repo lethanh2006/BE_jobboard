@@ -13,4 +13,6 @@ public sealed record AuthenticatedUserDto(
 public sealed record LoginResult(
     string AccessToken,
     DateTime ExpiresAt,
+    string RefreshToken,
+    DateTime RefreshExpiresAt,
     AuthenticatedUserDto User);
