@@ -11,7 +11,9 @@ using JobBoard.Application.Jobs;
 using JobBoard.Domain.Abstractions;
 using JobBoard.Infrastructure.Authentication;
 using JobBoard.Infrastructure.Persistence;
+using JobBoard.Infrastructure.Persistence.Database;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -25,6 +27,14 @@ var allowedOrigins = builder.Configuration
 var jwtOptions = builder.Configuration
     .GetRequiredSection(JwtOptions.SectionName)
     .Get<JwtOptions>() ?? throw new InvalidOperationException("Thiếu cấu hình JWT.");
+var persistenceProvider = builder.Configuration["Persistence:Provider"] ?? "InMemory";
+var usePostgres = persistenceProvider switch
+{
+    "InMemory" => false,
+    "PostgreSql" => true,
+    _ => throw new InvalidOperationException(
+        "Persistence:Provider chỉ nhận giá trị InMemory hoặc PostgreSql.")
+};
 
 if (string.IsNullOrWhiteSpace(jwtOptions.Issuer) ||
     string.IsNullOrWhiteSpace(jwtOptions.Audience) ||
@@ -44,17 +54,39 @@ builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddSingleton(jwtOptions);
 builder.Services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
-builder.Services.AddSingleton<IUserAccountRepository, InMemoryUserAccountRepository>();
 builder.Services.AddSingleton<IAccessTokenGenerator, JwtAccessTokenGenerator>();
-builder.Services.AddSingleton<IJobRepository>(serviceProvider =>
+
+if (usePostgres)
 {
-    var seedFilePath = Path.Combine(AppContext.BaseDirectory, "Data", "Seed", "jobs.json");
-    return new JsonJobRepository(seedFilePath, serviceProvider.GetRequiredService<IClock>());
-});
-builder.Services.AddSingleton<IJobApplicationRepository>(
-    new InMemoryJobApplicationRepository(seedDemoData: true));
-builder.Services.AddSingleton<ICandidateRepository>(
-    new InMemoryCandidateRepository(seedDemoData: true));
+    var connectionString = builder.Configuration.GetConnectionString("JobBoard");
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        throw new InvalidOperationException(
+            "ConnectionStrings:JobBoard là bắt buộc khi dùng PostgreSql.");
+    }
+
+    builder.Services.AddDbContext<JobBoardDbContext>(options =>
+        options.UseNpgsql(connectionString));
+    builder.Services.AddScoped<IUserAccountRepository, PostgresUserAccountRepository>();
+    builder.Services.AddScoped<IJobRepository, PostgresJobRepository>();
+    builder.Services.AddScoped<IJobApplicationRepository, PostgresJobApplicationRepository>();
+    builder.Services.AddScoped<ICandidateRepository, PostgresCandidateRepository>();
+    builder.Services.AddScoped<JobBoardDatabaseInitializer>();
+}
+else
+{
+    builder.Services.AddSingleton<IUserAccountRepository, InMemoryUserAccountRepository>();
+    builder.Services.AddSingleton<IJobRepository>(serviceProvider =>
+    {
+        var seedFilePath = Path.Combine(AppContext.BaseDirectory, "Data", "Seed", "jobs.json");
+        return new JsonJobRepository(seedFilePath, serviceProvider.GetRequiredService<IClock>());
+    });
+    builder.Services.AddSingleton<IJobApplicationRepository>(
+        new InMemoryJobApplicationRepository(seedDemoData: true));
+    builder.Services.AddSingleton<ICandidateRepository>(
+        new InMemoryCandidateRepository(seedDemoData: true));
+}
+
 builder.Services.AddScoped<JobSearchService>();
 builder.Services.AddScoped<JobDetailService>();
 builder.Services.AddScoped<JobManagementService>();
@@ -126,6 +158,14 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+if (usePostgres && builder.Configuration.GetValue<bool>("Persistence:ApplyMigrations"))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var initializer = scope.ServiceProvider.GetRequiredService<JobBoardDatabaseInitializer>();
+    var seedFilePath = Path.Combine(AppContext.BaseDirectory, "Data", "Seed", "jobs.json");
+    await initializer.InitializeAsync(seedFilePath);
+}
 
 app.UseExceptionHandler();
 

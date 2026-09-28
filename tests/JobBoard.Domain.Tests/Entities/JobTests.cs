@@ -140,6 +140,33 @@ public sealed class JobTests
         Assert.True(job.IsExpired);
     }
 
+    [Fact]
+    public void Restore_WithExpiredPublishedJob_PreservesHistoricalState()
+    {
+        var job = Job.Restore(
+            1,
+            "Backend Developer",
+            10,
+            new SalaryRange(1000, 2000),
+            Now.AddDays(-1),
+            new FixedClock(Now),
+            new Company(10, "Nova Technology"),
+            "TP. Hồ Chí Minh",
+            JobLevel.Middle,
+            WorkMode.Hybrid,
+            "Backend",
+            "Summary",
+            [],
+            [],
+            [],
+            Now.AddDays(-10),
+            false,
+            JobStatus.Published);
+
+        Assert.Equal(JobStatus.Published, job.Status);
+        Assert.True(job.IsExpired);
+    }
+
     private static Job CreateJob() =>
         new(1, "Backend Developer", 10, new SalaryRange(1000, 2000), Now.AddDays(7), new FixedClock(Now));
 

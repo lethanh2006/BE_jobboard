@@ -119,7 +119,7 @@ public sealed class JsonJobRepository : IJobRepository
 
     private Job MapJob(JobSeed seed)
     {
-        var job = new Job(
+        var job = Job.Restore(
             seed.Id,
             seed.Title,
             seed.CompanyId,
@@ -136,21 +136,12 @@ public sealed class JsonJobRepository : IJobRepository
             seed.Requirements,
             seed.Benefits,
             seed.PostedAt,
-            seed.Featured);
+            seed.Featured,
+            seed.Status);
 
         foreach (var skill in seed.Skills)
         {
             job.AddSkill(new Skill(skill));
-        }
-
-        if (seed.Status is JobStatus.Published or JobStatus.Closed)
-        {
-            job.Publish();
-        }
-
-        if (seed.Status == JobStatus.Closed)
-        {
-            job.Close();
         }
 
         return job;

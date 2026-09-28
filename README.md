@@ -29,6 +29,7 @@ chiều hướng vào trong.
 ## Requirements
 
 - .NET SDK 10.0.100 or a newer .NET 10 patch (selected by `global.json`)
+- Docker with Compose (optional, only for PostgreSQL mode)
 
 ## Run locally
 
@@ -40,6 +41,21 @@ dotnet build --no-restore
 dotnet test --no-build
 dotnet run --project src/JobBoard.Api --launch-profile http
 ```
+
+The default `InMemory` provider needs no external service. To run the persistent
+PostgreSQL mode:
+
+```bash
+docker compose up -d --wait
+Persistence__Provider=PostgreSql \
+Persistence__ApplyMigrations=true \
+dotnet run --project src/JobBoard.Api --launch-profile http
+```
+
+The local container listens on port `5434` to avoid taking the usual PostgreSQL
+port. `ApplyMigrations=true` applies committed migrations and seeds an empty
+database. For a controlled deployment, run `dotnet tool restore`, execute
+`dotnet ef database update`, and keep automatic migration disabled.
 
 Development endpoints:
 
@@ -58,6 +74,10 @@ are merged from `appsettings.Development.json`. Production must provide a privat
 signing key of at least 32 bytes through `Jwt__SigningKey`; the application fails
 fast when this secret is missing.
 
+`Persistence:Provider` accepts `InMemory` (default) or `PostgreSql`. PostgreSQL
+mode requires `ConnectionStrings:JobBoard`; override it with
+`ConnectionStrings__JobBoard` outside local development.
+
 Use double underscores to override nested settings:
 
 ```bash
@@ -72,7 +92,7 @@ for every deployed environment.
 
 ## Demo accounts
 
-The in-memory account store provides these local-development users:
+Both persistence providers seed these local-development users when empty:
 
 | Role | Email | Password |
 | --- | --- | --- |
@@ -96,8 +116,9 @@ nhận repository qua constructor và chỉ phụ thuộc các interface ở App
 `JobSearchService` lọc và phân trang qua LINQ rồi trả DTO tóm tắt; các chiến
 lược chấm điểm kỹ năng/lương có thể ghép qua `CompositeScorer`. Sự kiện
 `Job.Published` cho phép thành phần khác lắng nghe mà không tạo dependency ngược.
-Các repository và use case dùng API bất đồng bộ; Infrastructure có repository
-đọc dữ liệu seed JSON và repository đơn ứng tuyển in-memory để chạy không cần DB.
+Các repository và use case dùng API bất đồng bộ. Infrastructure hỗ trợ hai chế
+độ: JSON/in-memory để khởi động nhanh, hoặc EF Core/PostgreSQL với migration,
+index, foreign key, sequence cấp mã và unique constraint chống ứng tuyển trùng.
 
 Web API hiện cung cấp:
 
@@ -120,7 +141,7 @@ Lỗi validation/nghiệp vụ được chuẩn hóa về `ProblemDetails`. Dữ
 đã có cùng contract mà frontend cần: công ty, địa điểm, cấp bậc, hình thức làm
 việc, nội dung chi tiết, kỹ năng và thời hạn.
 
-Xác thực hiện dùng JWT, PBKDF2 và account store in-memory. Chưa có EF
-Core/PostgreSQL, refresh token, thu hồi phiên, MediatR, AutoMapper, cache, queue
-hay background job; các phần này sẽ được thêm theo đúng milestone trong tài liệu
-kế hoạch.
+Xác thực hiện dùng JWT và PBKDF2; account, hồ sơ, tin và đơn có thể được lưu bền
+vững bằng PostgreSQL. Chưa có refresh token, thu hồi phiên, MediatR, AutoMapper,
+cache, queue hay background job; các phần này sẽ được thêm theo đúng milestone
+trong tài liệu kế hoạch.

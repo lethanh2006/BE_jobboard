@@ -31,6 +31,49 @@ public sealed class Job
         IEnumerable<string>? benefits = null,
         DateTime? postedAt = null,
         bool featured = false)
+        : this(
+            id,
+            title,
+            companyId,
+            salary,
+            deadline,
+            clock,
+            company,
+            location,
+            level,
+            workMode,
+            category,
+            summary,
+            description,
+            requirements,
+            benefits,
+            postedAt,
+            featured,
+            JobStatus.Draft,
+            validateFutureDeadline: true)
+    {
+    }
+
+    private Job(
+        int id,
+        string title,
+        int companyId,
+        SalaryRange salary,
+        DateTime deadline,
+        IClock clock,
+        Company? company,
+        string location,
+        JobLevel level,
+        WorkMode workMode,
+        string category,
+        string summary,
+        IEnumerable<string>? description,
+        IEnumerable<string>? requirements,
+        IEnumerable<string>? benefits,
+        DateTime? postedAt,
+        bool featured,
+        JobStatus status,
+        bool validateFutureDeadline)
     {
         ArgumentNullException.ThrowIfNull(salary);
         ArgumentNullException.ThrowIfNull(clock);
@@ -50,9 +93,14 @@ public sealed class Job
             throw new ArgumentException("Công ty không khớp với CompanyId của tin tuyển dụng.", nameof(company));
         }
 
-        if (deadline <= clock.UtcNow)
+        if (validateFutureDeadline && deadline <= clock.UtcNow)
         {
             throw new ArgumentException("Hạn nộp hồ sơ phải ở tương lai.", nameof(deadline));
+        }
+
+        if (!Enum.IsDefined(status))
+        {
+            throw new ArgumentOutOfRangeException(nameof(status), "Trạng thái tin tuyển dụng không hợp lệ.");
         }
 
         Id = id;
@@ -71,6 +119,7 @@ public sealed class Job
         _benefits = NormalizeItems(benefits);
         PostedAt = postedAt ?? clock.UtcNow;
         Featured = featured;
+        Status = status;
         _clock = clock;
     }
 
@@ -113,6 +162,46 @@ public sealed class Job
     public bool IsExpired => Deadline <= _clock.UtcNow;
 
     public event Action<Job>? Published;
+
+    public static Job Restore(
+        int id,
+        string title,
+        int companyId,
+        SalaryRange salary,
+        DateTime deadline,
+        IClock clock,
+        Company? company,
+        string location,
+        JobLevel level,
+        WorkMode workMode,
+        string category,
+        string summary,
+        IEnumerable<string>? description,
+        IEnumerable<string>? requirements,
+        IEnumerable<string>? benefits,
+        DateTime postedAt,
+        bool featured,
+        JobStatus status) =>
+        new(
+            id,
+            title,
+            companyId,
+            salary,
+            deadline,
+            clock,
+            company,
+            location,
+            level,
+            workMode,
+            category,
+            summary,
+            description,
+            requirements,
+            benefits,
+            postedAt,
+            featured,
+            status,
+            validateFutureDeadline: false);
 
     public void Publish()
     {
