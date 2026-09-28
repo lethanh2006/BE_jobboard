@@ -30,6 +30,8 @@ public sealed class JobSearchService(IJobRepository jobs)
         }
 
         var keyword = query.Keyword?.Trim();
+        var location = query.Location?.Trim();
+        var category = query.Category?.Trim();
         var requiredSkills = new HashSet<string>(
             (query.Skills ?? [])
                 .Where(skill => !string.IsNullOrWhiteSpace(skill))
@@ -37,9 +39,18 @@ public sealed class JobSearchService(IJobRepository jobs)
             StringComparer.OrdinalIgnoreCase);
 
         Func<Job, bool> matchesKeyword = job =>
-            string.IsNullOrEmpty(keyword) || job.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase);
+            string.IsNullOrEmpty(keyword) ||
+            job.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+            (job.Company?.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            job.Skills.Any(skill => skill.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase));
         Func<Job, bool> matchesSalary = job =>
             query.MinimumSalary is null || job.Salary.Min >= query.MinimumSalary.Value;
+        Func<Job, bool> matchesLocation = job =>
+            string.IsNullOrEmpty(location) || job.Location.Contains(location, StringComparison.OrdinalIgnoreCase);
+        Func<Job, bool> matchesCategory = job =>
+            string.IsNullOrEmpty(category) || job.Category.Contains(category, StringComparison.OrdinalIgnoreCase);
+        Func<Job, bool> matchesLevel = job =>
+            query.Level is null || job.Level == query.Level;
         Func<Job, bool> matchesSkills = job =>
             requiredSkills.Count == 0 || requiredSkills.All(requiredSkill =>
                 job.Skills.Any(skill => string.Equals(skill.Name, requiredSkill, StringComparison.OrdinalIgnoreCase)));
@@ -47,10 +58,18 @@ public sealed class JobSearchService(IJobRepository jobs)
         var jobs = await _jobs.GetAllAsync(cancellationToken);
         var filteredJobs = jobs
             .Where(job => job.Status == JobStatus.Published && !job.IsExpired)
-            .Where(job => matchesKeyword(job) && matchesSalary(job) && matchesSkills(job))
-            .OrderByDescending(job => job.Salary.Max)
-            .ThenBy(job => job.Id)
+            .Where(job =>
+                matchesKeyword(job) &&
+                matchesSalary(job) &&
+                matchesSkills(job) &&
+                matchesLocation(job) &&
+                matchesCategory(job) &&
+                matchesLevel(job))
             .ToList();
+
+        filteredJobs = query.Sort == JobSortOrder.SalaryDescending
+            ? filteredJobs.OrderByDescending(job => job.Salary.Max).ThenBy(job => job.Id).ToList()
+            : filteredJobs.OrderByDescending(job => job.PostedAt).ThenBy(job => job.Id).ToList();
 
         var items = filteredJobs
             .Skip((query.Page - 1) * query.PageSize)
@@ -66,8 +85,15 @@ public sealed class JobSearchService(IJobRepository jobs)
             job.Id,
             job.Title,
             job.CompanyId,
+            job.Company?.Name ?? $"Công ty #{job.CompanyId}",
+            job.Location,
             job.Salary.Min,
             job.Salary.Max,
+            job.Level,
+            job.WorkMode,
+            job.Category,
             job.Deadline,
+            job.PostedAt,
+            job.Featured,
             job.Skills.Select(skill => skill.Name).Order(StringComparer.OrdinalIgnoreCase).ToList());
 }

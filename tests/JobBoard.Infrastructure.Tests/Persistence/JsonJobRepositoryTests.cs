@@ -15,9 +15,13 @@ public sealed class JsonJobRepositoryTests
 
         var jobs = await repository.GetAllAsync();
 
-        Assert.Equal(3, jobs.Count);
+        Assert.Equal(6, jobs.Count);
         var backendJob = Assert.Single(jobs, job => job.Id == 1);
         Assert.Equal("Backend Developer (.NET)", backendJob.Title);
+        Assert.Equal("Nova Technology", backendJob.Company?.Name);
+        Assert.Equal("TP. Hồ Chí Minh", backendJob.Location);
+        Assert.Equal(JobLevel.Middle, backendJob.Level);
+        Assert.Equal(WorkMode.Hybrid, backendJob.WorkMode);
         Assert.Equal(JobStatus.Published, backendJob.Status);
         Assert.Contains(backendJob.Skills, skill => skill.Name == "PostgreSQL");
     }
@@ -39,7 +43,7 @@ public sealed class JsonJobRepositoryTests
     {
         var repository = CreateRepository();
         var job = new Job(
-            4,
+            7,
             "QA Engineer",
             2,
             new SalaryRange(1200, 2000),
@@ -50,7 +54,7 @@ public sealed class JsonJobRepositoryTests
         job.Publish();
         await repository.UpdateAsync(job);
 
-        var savedJob = await repository.GetByIdAsync(4);
+        var savedJob = await repository.GetByIdAsync(7);
         Assert.NotNull(savedJob);
         Assert.Equal(JobStatus.Published, savedJob.Status);
     }

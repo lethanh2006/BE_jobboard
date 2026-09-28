@@ -8,6 +8,9 @@ public sealed class Job
     public const int MaxSkillsPerJob = 15;
 
     private readonly IClock _clock;
+    private readonly IReadOnlyList<string> _benefits;
+    private readonly IReadOnlyList<string> _description;
+    private readonly IReadOnlyList<string> _requirements;
     private readonly HashSet<Skill> _skills = new(SkillNameComparer.Instance);
 
     public Job(
@@ -16,7 +19,18 @@ public sealed class Job
         int companyId,
         SalaryRange salary,
         DateTime deadline,
-        IClock clock)
+        IClock clock,
+        Company? company = null,
+        string location = "",
+        JobLevel level = JobLevel.Middle,
+        WorkMode workMode = WorkMode.Onsite,
+        string category = "",
+        string summary = "",
+        IEnumerable<string>? description = null,
+        IEnumerable<string>? requirements = null,
+        IEnumerable<string>? benefits = null,
+        DateTime? postedAt = null,
+        bool featured = false)
     {
         ArgumentNullException.ThrowIfNull(salary);
         ArgumentNullException.ThrowIfNull(clock);
@@ -31,6 +45,11 @@ public sealed class Job
             throw new ArgumentOutOfRangeException(nameof(companyId), "CompanyId phải lớn hơn 0.");
         }
 
+        if (company is not null && company.Id != companyId)
+        {
+            throw new ArgumentException("Công ty không khớp với CompanyId của tin tuyển dụng.", nameof(company));
+        }
+
         if (deadline <= clock.UtcNow)
         {
             throw new ArgumentException("Hạn nộp hồ sơ phải ở tương lai.", nameof(deadline));
@@ -39,8 +58,19 @@ public sealed class Job
         Id = id;
         Title = title.Trim();
         CompanyId = companyId;
+        Company = company;
         Salary = salary;
         Deadline = deadline;
+        Location = location.Trim();
+        Level = level;
+        WorkMode = workMode;
+        Category = category.Trim();
+        Summary = summary.Trim();
+        _description = NormalizeItems(description);
+        _requirements = NormalizeItems(requirements);
+        _benefits = NormalizeItems(benefits);
+        PostedAt = postedAt ?? clock.UtcNow;
+        Featured = featured;
         _clock = clock;
     }
 
@@ -50,9 +80,31 @@ public sealed class Job
 
     public int CompanyId { get; }
 
+    public Company? Company { get; }
+
     public SalaryRange Salary { get; }
 
     public DateTime Deadline { get; }
+
+    public string Location { get; }
+
+    public JobLevel Level { get; }
+
+    public WorkMode WorkMode { get; }
+
+    public string Category { get; }
+
+    public string Summary { get; }
+
+    public IReadOnlyList<string> Description => _description;
+
+    public IReadOnlyList<string> Requirements => _requirements;
+
+    public IReadOnlyList<string> Benefits => _benefits;
+
+    public DateTime PostedAt { get; }
+
+    public bool Featured { get; }
 
     public JobStatus Status { get; private set; }
 
@@ -99,4 +151,10 @@ public sealed class Job
 
         return _skills.Add(skill);
     }
+
+    private static IReadOnlyList<string> NormalizeItems(IEnumerable<string>? items) =>
+        (items ?? [])
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Select(item => item.Trim())
+            .ToList();
 }

@@ -111,7 +111,18 @@ public sealed class JsonJobRepository : IJobRepository
             seed.CompanyId,
             new SalaryRange(seed.SalaryMin, seed.SalaryMax),
             seed.Deadline,
-            _clock);
+            _clock,
+            new Company(seed.CompanyId, seed.Company, seed.Location),
+            seed.Location,
+            seed.Level,
+            seed.WorkMode,
+            seed.Category,
+            seed.Summary,
+            seed.Description,
+            seed.Requirements,
+            seed.Benefits,
+            seed.PostedAt,
+            seed.Featured);
 
         foreach (var skill in seed.Skills)
         {
@@ -135,9 +146,20 @@ public sealed class JsonJobRepository : IJobRepository
         int Id,
         string Title,
         int CompanyId,
+        string Company,
+        string Location,
         decimal SalaryMin,
         decimal SalaryMax,
+        JobLevel Level,
+        WorkMode WorkMode,
+        string Category,
+        string Summary,
+        IReadOnlyList<string> Description,
+        IReadOnlyList<string> Requirements,
+        IReadOnlyList<string> Benefits,
+        DateTime PostedAt,
         DateTime Deadline,
         JobStatus Status,
+        bool Featured,
         IReadOnlyList<string> Skills);
 }

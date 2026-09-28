@@ -79,6 +79,16 @@ lược chấm điểm kỹ năng/lương có thể ghép qua `CompositeScorer`.
 Các repository và use case dùng API bất đồng bộ; Infrastructure có repository
 đọc dữ liệu seed JSON và repository đơn ứng tuyển in-memory để chạy không cần DB.
 
+Web API hiện cung cấp:
+
+- `GET /api/health` kiểm tra trạng thái dịch vụ.
+- `GET /api/jobs` tìm kiếm, lọc, sắp xếp và phân trang tin đang tuyển.
+- `GET /api/jobs/{id}` lấy đầy đủ nội dung một tin tuyển dụng.
+
+Lỗi validation/nghiệp vụ được chuẩn hóa về `ProblemDetails`. Dữ liệu Job trả về
+đã có cùng contract mà frontend cần: công ty, địa điểm, cấp bậc, hình thức làm
+việc, nội dung chi tiết, kỹ năng và thời hạn.
+
 Chưa có repository hạ tầng, EF Core/PostgreSQL, auth, MediatR, AutoMapper,
 cache, queue hay background job; các phần này sẽ được thêm theo đúng milestone
 trong tài liệu kế hoạch.

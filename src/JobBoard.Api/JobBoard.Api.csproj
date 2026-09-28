@@ -16,4 +16,10 @@
     <ProjectReference Include="..\JobBoard.Domain\JobBoard.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\JobBoard.Infrastructure\Data\Seed\jobs.json"
+             Link="Data\Seed\jobs.json"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

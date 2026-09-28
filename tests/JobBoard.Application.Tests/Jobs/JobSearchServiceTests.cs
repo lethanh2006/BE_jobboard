@@ -41,7 +41,10 @@ public sealed class JobSearchServiceTests
         AddJob(3, "Job 3", 1000, 1000, true);
         var service = new JobSearchService(_jobs);
 
-        var result = await service.SearchAsync(new SearchJobsQuery(Page: 2, PageSize: 1));
+        var result = await service.SearchAsync(new SearchJobsQuery(
+            Page: 2,
+            PageSize: 1,
+            Sort: JobSortOrder.SalaryDescending));
 
         Assert.Equal(1, Assert.Single(result.Items).Id);
         Assert.Equal(3, result.TotalItems);
@@ -61,6 +64,34 @@ public sealed class JobSearchServiceTests
         var result = await service.SearchAsync(new SearchJobsQuery());
 
         Assert.Empty(result.Items);
+    }
+
+    [Fact]
+    public async Task Search_AppliesLocationCategoryAndLevelFilters()
+    {
+        var matchingJob = new Job(
+            1,
+            "Backend Developer",
+            30,
+            new SalaryRange(1000, 2000),
+            Now.AddDays(7),
+            new MutableClock(Now),
+            new Company(30, "Công ty ABC"),
+            "Hà Nội",
+            JobLevel.Senior,
+            WorkMode.Hybrid,
+            "Lập trình Backend");
+        matchingJob.Publish();
+        _jobs.Seed(matchingJob);
+        AddJob(2, "Frontend Developer", 1000, 2000, true, "TypeScript");
+        var service = new JobSearchService(_jobs);
+
+        var result = await service.SearchAsync(new SearchJobsQuery(
+            Location: "hà nội",
+            Category: "backend",
+            Level: JobLevel.Senior));
+
+        Assert.Equal(1, Assert.Single(result.Items).Id);
     }
 
     [Theory]
