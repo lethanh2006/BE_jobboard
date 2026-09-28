@@ -22,7 +22,7 @@ public sealed class ApplicationServiceTests
         job.Publish();
         var service = CreateService();
 
-        var application = await service.ApplyAsync(applicationId: 1, candidateId: 20, jobId: job.Id);
+        var application = await service.ApplyAsync(candidateId: 20, jobId: job.Id);
 
         Assert.Equal(job.Id, application.JobId);
         Assert.Equal(20, application.CandidateId);
@@ -36,7 +36,7 @@ public sealed class ApplicationServiceTests
     {
         var service = CreateService();
 
-        await Assert.ThrowsAsync<ResourceNotFoundException>(() => service.ApplyAsync(1, 20, jobId: 999));
+        await Assert.ThrowsAsync<ResourceNotFoundException>(() => service.ApplyAsync(20, jobId: 999));
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public sealed class ApplicationServiceTests
         var job = AddJob();
         var service = CreateService();
 
-        await Assert.ThrowsAsync<JobClosedException>(() => service.ApplyAsync(1, 20, job.Id));
+        await Assert.ThrowsAsync<JobClosedException>(() => service.ApplyAsync(20, job.Id));
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public sealed class ApplicationServiceTests
         _clock.UtcNow = Now.AddDays(8);
         var service = CreateService();
 
-        await Assert.ThrowsAsync<JobClosedException>(() => service.ApplyAsync(1, 20, job.Id));
+        await Assert.ThrowsAsync<JobClosedException>(() => service.ApplyAsync(20, job.Id));
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public sealed class ApplicationServiceTests
         await _applications.AddAsync(new JobApplication(1, job.Id, candidateId: 20, Now.AddDays(-1)));
         var service = CreateService();
 
-        await Assert.ThrowsAsync<AlreadyAppliedException>(() => service.ApplyAsync(2, 20, job.Id));
+        await Assert.ThrowsAsync<AlreadyAppliedException>(() => service.ApplyAsync(20, job.Id));
     }
 
     [Fact]
@@ -124,6 +124,9 @@ public sealed class ApplicationServiceTests
         public Task<IReadOnlyCollection<Job>> GetAllAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyCollection<Job>>(_jobs.Values);
 
+        public Task<int> GetNextIdAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(_jobs.Count + 1);
+
         public Task AddAsync(Job entity, CancellationToken cancellationToken = default)
         {
             _jobs.Add(entity.Id, entity);
@@ -142,6 +145,13 @@ public sealed class ApplicationServiceTests
         private readonly Dictionary<int, JobApplication> _applications = [];
 
         public int UpdateCount { get; private set; }
+
+        public Task<int> GetNextIdAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(_applications.Count + 1);
+
+        public Task<IReadOnlyCollection<JobApplication>> GetAllAsync(
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyCollection<JobApplication>>(_applications.Values.ToArray());
 
         public Task<JobApplication?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
             Task.FromResult(_applications.GetValueOrDefault(id));
@@ -165,6 +175,20 @@ public sealed class ApplicationServiceTests
             CancellationToken cancellationToken = default) =>
             Task.FromResult(_applications.Values.Any(application =>
                 application.CandidateId == candidateId && application.JobId == jobId));
+
+        public Task<IReadOnlyCollection<JobApplication>> GetByCandidateIdAsync(
+            int candidateId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyCollection<JobApplication>>(_applications.Values
+                .Where(application => application.CandidateId == candidateId)
+                .ToArray());
+
+        public Task<IReadOnlyCollection<JobApplication>> GetByJobIdAsync(
+            int jobId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyCollection<JobApplication>>(_applications.Values
+                .Where(application => application.JobId == jobId)
+                .ToArray());
     }
 
     private sealed class MutableClock(DateTime utcNow) : IClock

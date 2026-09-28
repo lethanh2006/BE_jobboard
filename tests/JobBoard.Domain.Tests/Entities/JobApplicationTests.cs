@@ -21,6 +21,19 @@ public sealed class JobApplicationTests
     }
 
     [Fact]
+    public void Restore_WithPersistedStatus_RehydratesApplication()
+    {
+        var application = JobApplication.Restore(
+            1,
+            10,
+            20,
+            Now,
+            ApplicationStatus.Reviewing);
+
+        Assert.Equal(ApplicationStatus.Reviewing, application.Status);
+    }
+
+    [Fact]
     public void ChangeStatus_ByEmployerOfOwningCompany_UpdatesStatus()
     {
         var job = CreateJob(id: 10, companyId: 30);

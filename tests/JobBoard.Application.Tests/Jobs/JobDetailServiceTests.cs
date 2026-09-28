@@ -70,6 +70,9 @@ public sealed class JobDetailServiceTests
         public Task<IReadOnlyCollection<Job>> GetAllAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyCollection<Job>>(_jobs.Values);
 
+        public Task<int> GetNextIdAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(_jobs.Count + 1);
+
         public Task AddAsync(Job entity, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 

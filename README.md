@@ -84,6 +84,11 @@ Web API hiện cung cấp:
 - `GET /api/health` kiểm tra trạng thái dịch vụ.
 - `GET /api/jobs` tìm kiếm, lọc, sắp xếp và phân trang tin đang tuyển.
 - `GET /api/jobs/{id}` lấy đầy đủ nội dung một tin tuyển dụng.
+- `POST /api/applications` nộp đơn và tự cấp mã đơn ở phía server.
+- `GET /api/candidates/{id}/applications` xem lịch sử ứng tuyển.
+- `PATCH /api/applications/{id}/status` cập nhật trạng thái đơn có kiểm tra công
+  ty quản lý tin.
+- Nhóm `/api/employers/{companyId}` hỗ trợ xem/tạo/đăng/đóng tin và xem ứng viên.
 
 Lỗi validation/nghiệp vụ được chuẩn hóa về `ProblemDetails`. Dữ liệu Job trả về
 đã có cùng contract mà frontend cần: công ty, địa điểm, cấp bậc, hình thức làm

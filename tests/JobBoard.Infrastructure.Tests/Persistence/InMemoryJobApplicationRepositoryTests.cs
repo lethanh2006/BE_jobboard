@@ -21,4 +21,16 @@ public sealed class InMemoryJobApplicationRepositoryTests
         Assert.True(await repository.HasAppliedAsync(candidateId: 20, jobId: 10));
         Assert.False(await repository.HasAppliedAsync(candidateId: 21, jobId: 10));
     }
+
+    [Fact]
+    public async Task SeededRepository_ReturnsCandidateHistoryAndNextIdentity()
+    {
+        var repository = new InMemoryJobApplicationRepository(seedDemoData: true);
+
+        var history = await repository.GetByCandidateIdAsync(20);
+        var nextId = await repository.GetNextIdAsync();
+
+        Assert.Equal(3, history.Count);
+        Assert.Equal(4, nextId);
+    }
 }

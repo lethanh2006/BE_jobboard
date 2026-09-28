@@ -22,6 +22,22 @@ public sealed class JobApplication
         AppliedAt = appliedAt;
     }
 
+    private JobApplication(
+        int id,
+        int jobId,
+        int candidateId,
+        DateTime appliedAt,
+        ApplicationStatus status)
+        : this(id, jobId, candidateId, appliedAt)
+    {
+        if (!Enum.IsDefined(status))
+        {
+            throw new ArgumentOutOfRangeException(nameof(status), "Trạng thái đơn ứng tuyển không hợp lệ.");
+        }
+
+        Status = status;
+    }
+
     public int Id { get; }
 
     public int JobId { get; }
@@ -31,6 +47,14 @@ public sealed class JobApplication
     public ApplicationStatus Status { get; private set; }
 
     public DateTime AppliedAt { get; }
+
+    public static JobApplication Restore(
+        int id,
+        int jobId,
+        int candidateId,
+        DateTime appliedAt,
+        ApplicationStatus status) =>
+        new(id, jobId, candidateId, appliedAt, status);
 
     public void ChangeStatus(ApplicationStatus status, User manager, Job job)
     {

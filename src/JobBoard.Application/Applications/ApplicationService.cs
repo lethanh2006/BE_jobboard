@@ -23,7 +23,6 @@ public sealed class ApplicationService
     }
 
     public async Task<JobApplication> ApplyAsync(
-        int applicationId,
         int candidateId,
         int jobId,
         CancellationToken cancellationToken = default)
@@ -41,6 +40,7 @@ public sealed class ApplicationService
             throw new AlreadyAppliedException("Ứng viên đã ứng tuyển vào tin tuyển dụng này.");
         }
 
+        var applicationId = await _applications.GetNextIdAsync(cancellationToken);
         var application = new JobApplication(applicationId, job.Id, candidateId, _clock.UtcNow);
         await _applications.AddAsync(application, cancellationToken);
 

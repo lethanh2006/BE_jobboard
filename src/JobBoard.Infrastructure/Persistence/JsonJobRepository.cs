@@ -17,6 +17,7 @@ public sealed class JsonJobRepository : IJobRepository
     private readonly SemaphoreSlim _initializationLock = new(1, 1);
     private readonly object _syncRoot = new();
     private readonly string _seedFilePath;
+    private int _lastId;
     private Dictionary<int, Job>? _jobs;
 
     public JsonJobRepository(string seedFilePath, IClock clock)
@@ -50,6 +51,17 @@ public sealed class JsonJobRepository : IJobRepository
         }
     }
 
+    public async Task<int> GetNextIdAsync(CancellationToken cancellationToken = default)
+    {
+        await EnsureLoadedAsync(cancellationToken);
+
+        lock (_syncRoot)
+        {
+            _lastId++;
+            return _lastId;
+        }
+    }
+
     public async Task AddAsync(Job entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
@@ -58,6 +70,7 @@ public sealed class JsonJobRepository : IJobRepository
         lock (_syncRoot)
         {
             _jobs!.Add(entity.Id, entity);
+            _lastId = Math.Max(_lastId, entity.Id);
         }
     }
 
@@ -96,6 +109,7 @@ public sealed class JsonJobRepository : IJobRepository
             _jobs = seeds
                 .Select(MapJob)
                 .ToDictionary(job => job.Id);
+            _lastId = _jobs.Count == 0 ? 0 : _jobs.Keys.Max();
         }
         finally
         {
