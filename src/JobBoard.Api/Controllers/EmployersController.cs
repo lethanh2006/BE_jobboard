@@ -1,12 +1,16 @@
+using JobBoard.Api.Authentication;
 using JobBoard.Api.Contracts.Jobs;
 using JobBoard.Application.Applications;
+using JobBoard.Application.Authentication;
 using JobBoard.Application.Jobs;
 using JobBoard.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobBoard.Api.Controllers;
 
 [ApiController]
+[Authorize(Roles = nameof(AccountRole.Employer))]
 [Route("api/employers/{companyId:int}")]
 public sealed class EmployersController(
     JobManagementService jobManagementService,
@@ -18,6 +22,11 @@ public sealed class EmployersController(
         int companyId,
         CancellationToken cancellationToken)
     {
+        if (!CanManageCompany(companyId))
+        {
+            return Forbid();
+        }
+
         return Ok(await jobManagementService.GetByCompanyIdAsync(companyId, cancellationToken));
     }
 
@@ -28,10 +37,15 @@ public sealed class EmployersController(
         CreateJobRequest request,
         CancellationToken cancellationToken)
     {
+        if (!CanManageCompany(companyId))
+        {
+            return Forbid();
+        }
+
         var job = await jobManagementService.CreateDraftAsync(
             new CreateJobCommand(
                 companyId,
-                request.CompanyName,
+                User.GetRequiredClaim(JobBoardClaimTypes.CompanyName),
                 request.Title,
                 request.Location,
                 request.SalaryMin,
@@ -53,6 +67,11 @@ public sealed class EmployersController(
         int jobId,
         CancellationToken cancellationToken)
     {
+        if (!CanManageCompany(companyId))
+        {
+            return Forbid();
+        }
+
         return Ok(await jobManagementService.PublishAsync(
             jobId,
             CreateManager(companyId),
@@ -65,6 +84,11 @@ public sealed class EmployersController(
         int jobId,
         CancellationToken cancellationToken)
     {
+        if (!CanManageCompany(companyId))
+        {
+            return Forbid();
+        }
+
         return Ok(await jobManagementService.CloseAsync(
             jobId,
             CreateManager(companyId),
@@ -77,13 +101,20 @@ public sealed class EmployersController(
         int companyId,
         CancellationToken cancellationToken)
     {
+        if (!CanManageCompany(companyId))
+        {
+            return Forbid();
+        }
+
         return Ok(await applicationQueryService.GetByCompanyIdAsync(companyId, cancellationToken));
     }
 
-    private static Employer CreateManager(int companyId) =>
+    private bool CanManageCompany(int companyId) => User.GetRequiredCompanyId() == companyId;
+
+    private Employer CreateManager(int companyId) =>
         new(
-            1,
-            "Nhà tuyển dụng",
-            "employer@jobboard.vn",
+            User.GetRequiredUserId(),
+            User.GetRequiredClaim(JobBoardClaimTypes.Name),
+            User.GetRequiredClaim(JobBoardClaimTypes.Email),
             new Company(companyId, $"Công ty #{companyId}"));
 }

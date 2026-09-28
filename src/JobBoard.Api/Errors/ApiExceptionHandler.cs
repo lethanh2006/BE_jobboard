@@ -16,6 +16,7 @@ public sealed class ApiExceptionHandler(
     {
         var (statusCode, title) = exception switch
         {
+            InvalidCredentialsException => (StatusCodes.Status401Unauthorized, "Đăng nhập thất bại"),
             ResourceNotFoundException => (StatusCodes.Status404NotFound, "Không tìm thấy tài nguyên"),
             JobManagementForbiddenException => (StatusCodes.Status403Forbidden, "Không có quyền thực hiện"),
             AlreadyAppliedException => (StatusCodes.Status409Conflict, "Đơn ứng tuyển đã tồn tại"),

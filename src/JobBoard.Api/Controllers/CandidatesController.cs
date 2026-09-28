@@ -1,11 +1,15 @@
+using JobBoard.Api.Authentication;
 using JobBoard.Api.Contracts.Candidates;
 using JobBoard.Application.Applications;
+using JobBoard.Application.Authentication;
 using JobBoard.Application.Candidates;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobBoard.Api.Controllers;
 
 [ApiController]
+[Authorize(Roles = nameof(AccountRole.Candidate))]
 [Route("api/candidates")]
 public sealed class CandidatesController(
     ApplicationQueryService applicationQueryService,
@@ -17,6 +21,11 @@ public sealed class CandidatesController(
         int candidateId,
         CancellationToken cancellationToken)
     {
+        if (candidateId != User.GetRequiredUserId())
+        {
+            return Forbid();
+        }
+
         return Ok(await candidateProfileService.GetByIdAsync(candidateId, cancellationToken));
     }
 
@@ -27,6 +36,11 @@ public sealed class CandidatesController(
         UpdateCandidateProfileRequest request,
         CancellationToken cancellationToken)
     {
+        if (candidateId != User.GetRequiredUserId())
+        {
+            return Forbid();
+        }
+
         var profile = await candidateProfileService.UpdateAsync(
             candidateId,
             new UpdateCandidateProfileCommand(
@@ -46,6 +60,11 @@ public sealed class CandidatesController(
         int candidateId,
         CancellationToken cancellationToken)
     {
+        if (candidateId != User.GetRequiredUserId())
+        {
+            return Forbid();
+        }
+
         var applications = await applicationQueryService.GetByCandidateIdAsync(
             candidateId,
             cancellationToken);

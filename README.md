@@ -51,17 +51,37 @@ HTTPS redirection is disabled only in Development so the frontend can call the H
 
 ## Configuration
 
-ASP.NET Core loads `appsettings.json`, then the environment-specific file, then environment variables. Development allows the frontend origin `http://localhost:3000` through `Cors:AllowedOrigins`.
+ASP.NET Core loads `appsettings.json`, then the environment-specific file, then
+environment variables. Development allows the frontend origin
+`http://localhost:3000` through `Cors:AllowedOrigins`. JWT development settings
+are merged from `appsettings.Development.json`. Production must provide a private
+signing key of at least 32 bytes through `Jwt__SigningKey`; the application fails
+fast when this secret is missing.
 
 Use double underscores to override nested settings:
 
 ```bash
 ASPNETCORE_ENVIRONMENT=Development \
 Cors__AllowedOrigins__0=http://localhost:3000 \
+Jwt__SigningKey='replace-with-a-long-random-production-secret' \
 dotnet run --project src/JobBoard.Api --launch-profile http
 ```
 
-Do not commit secrets to appsettings files. Use environment variables or .NET user secrets when secrets are introduced.
+Do not reuse the development key. Use environment variables or .NET user secrets
+for every deployed environment.
+
+## Demo accounts
+
+The in-memory account store provides these local-development users:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Candidate | `candidate@jobboard.vn` | `JobBoard@123` |
+| Employer (company 1) | `employer@jobboard.vn` | `JobBoard@123` |
+| Admin | `admin@jobboard.vn` | `JobBoard@123` |
+
+Passwords are stored as salted PBKDF2 hashes. `POST /api/auth/login` returns a
+short-lived bearer token; `GET /api/auth/me` returns its current principal.
 
 ## Current scope
 
@@ -84,18 +104,23 @@ Web API hiện cung cấp:
 - `GET /api/health` kiểm tra trạng thái dịch vụ.
 - `GET /api/jobs` tìm kiếm, lọc, sắp xếp và phân trang tin đang tuyển.
 - `GET /api/jobs/{id}` lấy đầy đủ nội dung một tin tuyển dụng.
-- `POST /api/applications` nộp đơn và tự cấp mã đơn ở phía server.
-- `GET /api/candidates/{id}/applications` xem lịch sử ứng tuyển.
+- `POST /api/auth/login` xác thực tài khoản và cấp JWT; `GET /api/auth/me` đọc
+  người dùng hiện tại.
+- `POST /api/applications` nộp đơn bằng danh tính ứng viên trong JWT và tự cấp
+  mã đơn ở phía server.
+- `GET /api/candidates/{id}/applications` xem lịch sử của chính ứng viên.
 - `GET/PUT /api/candidates/{id}/profile` đọc và cập nhật hồ sơ, khoảng lương,
   kỹ năng của ứng viên.
 - `PATCH /api/applications/{id}/status` cập nhật trạng thái đơn có kiểm tra công
   ty quản lý tin.
-- Nhóm `/api/employers/{companyId}` hỗ trợ xem/tạo/đăng/đóng tin và xem ứng viên.
+- Nhóm `/api/employers/{companyId}` hỗ trợ xem/tạo/đăng/đóng tin và xem ứng viên;
+  company scope được đối chiếu với JWT.
 
 Lỗi validation/nghiệp vụ được chuẩn hóa về `ProblemDetails`. Dữ liệu Job trả về
 đã có cùng contract mà frontend cần: công ty, địa điểm, cấp bậc, hình thức làm
 việc, nội dung chi tiết, kỹ năng và thời hạn.
 
-Chưa có repository hạ tầng, EF Core/PostgreSQL, auth, MediatR, AutoMapper,
-cache, queue hay background job; các phần này sẽ được thêm theo đúng milestone
-trong tài liệu kế hoạch.
+Xác thực hiện dùng JWT, PBKDF2 và account store in-memory. Chưa có EF
+Core/PostgreSQL, refresh token, thu hồi phiên, MediatR, AutoMapper, cache, queue
+hay background job; các phần này sẽ được thêm theo đúng milestone trong tài liệu
+kế hoạch.
