@@ -86,6 +86,8 @@ Web API hiện cung cấp:
 - `GET /api/jobs/{id}` lấy đầy đủ nội dung một tin tuyển dụng.
 - `POST /api/applications` nộp đơn và tự cấp mã đơn ở phía server.
 - `GET /api/candidates/{id}/applications` xem lịch sử ứng tuyển.
+- `GET/PUT /api/candidates/{id}/profile` đọc và cập nhật hồ sơ, khoảng lương,
+  kỹ năng của ứng viên.
 - `PATCH /api/applications/{id}/status` cập nhật trạng thái đơn có kiểm tra công
   ty quản lý tin.
 - Nhóm `/api/employers/{companyId}` hỗ trợ xem/tạo/đăng/đóng tin và xem ứng viên.

@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using JobBoard.Api.Errors;
 using JobBoard.Application.Abstractions.Persistence;
 using JobBoard.Application.Applications;
+using JobBoard.Application.Candidates;
 using JobBoard.Application.Jobs;
 using JobBoard.Domain.Abstractions;
 using JobBoard.Infrastructure.Persistence;
@@ -28,11 +29,14 @@ builder.Services.AddSingleton<IJobRepository>(serviceProvider =>
 });
 builder.Services.AddSingleton<IJobApplicationRepository>(
     new InMemoryJobApplicationRepository(seedDemoData: true));
+builder.Services.AddSingleton<ICandidateRepository>(
+    new InMemoryCandidateRepository(seedDemoData: true));
 builder.Services.AddScoped<JobSearchService>();
 builder.Services.AddScoped<JobDetailService>();
 builder.Services.AddScoped<JobManagementService>();
 builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<ApplicationQueryService>();
+builder.Services.AddScoped<CandidateProfileService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCorsPolicy, policy =>

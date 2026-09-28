@@ -84,4 +84,23 @@ public sealed class CandidateTests
         Assert.False(duplicateAdded);
         Assert.Single(candidate.Skills);
     }
+
+    [Fact]
+    public void UpdateProfile_ReplacesContactSalaryAndSkills()
+    {
+        var candidate = new Candidate(1, "Nguyễn An", "old@example.com");
+        candidate.AddSkill(new Skill("C#"));
+
+        candidate.UpdateProfile(
+            "new@example.com",
+            "  Backend Developer  ",
+            new SalaryRange(1800, 2800),
+            [new Skill("PostgreSQL"), new Skill("postgresql"), new Skill("Docker")]);
+
+        Assert.Equal("new@example.com", candidate.Email);
+        Assert.Equal("Backend Developer", candidate.Bio);
+        Assert.Equal(new SalaryRange(1800, 2800), candidate.DesiredSalary);
+        Assert.Equal(2, candidate.Skills.Count);
+        Assert.DoesNotContain(candidate.Skills, skill => skill.Name == "C#");
+    }
 }
